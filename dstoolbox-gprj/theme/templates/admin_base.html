@@ -61,7 +61,7 @@
 				left: -250px;
 				position: fixed;
 				width: 250px;
-				height: 100vh;
+				height: 100%;
 				transition: left 0.3s ease-in-out;
 				z-index: 1000;
 			}
@@ -121,6 +121,7 @@
 			.content {
 				margin-left: 0;
 				width: 100%;
+				height: auto;
 			}
 		}
 
@@ -137,7 +138,8 @@
 		@media (max-width: 768px) {
 			.main-box {
 				margin-top: 35px;
-				height: 90vh;
+				height: auto;
+				min-height: 90vh;
 			}
 		}
 	</style>
@@ -154,10 +156,12 @@
 			<i class="fas fa-times" onclick="toggleSidebar()"></i>
 		</div>
 		<h2>ชื่อร้าน</h2>
-		<a href="#"><i class="fas fa-chart-line"></i> <span style="margin-left: 10px;">รายงานยอดการขาย</span></a>
+		<a href="{% url 'dashboard' %}"><i class="fas fa-chart-line"></i> <span
+				style="margin-left: 10px;">รายงานยอดการขาย</span></a>
 		<a href="#"><i class="fas fa-utensils"></i> <span style="margin-left: 15px;">เมนู</span></a>
 		<a href="#"><i class="fas fa-receipt"></i> <span style="margin-left: 15px;">ออเดอร์</span></a>
-		<a href="#"><i class="fas fa-gift"></i> <span style="margin-left: 10px;">ระบบสะสมแต้ม</span></a>
+		<a href="{% url 'reward' %}"><i class="fas fa-gift"></i> <span
+				style="margin-left: 10px;">ระบบสะสมแต้ม</span></a>
 	</div>
 
 	<!-- Main Content -->
