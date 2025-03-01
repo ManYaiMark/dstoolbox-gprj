@@ -40,7 +40,8 @@ INSTALLED_APPS = [
     "posapp",
     "django_browser_reload",
     'tailwind',
-    'theme'
+    'theme',
+    'user',
 ]
 
 MIDDLEWARE = [

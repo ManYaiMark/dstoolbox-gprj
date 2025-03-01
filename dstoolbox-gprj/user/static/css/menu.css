@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.menu-item {
+    @apply bg-white p-4 rounded-lg shadow-md transition hover:shadow-lg;
+}
+
+.menu-item img {
+    @apply rounded w-full object-cover h-32;
+}
+
+.cart-button {
+    @apply fixed bottom-4 right-4 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg flex items-center;
+}

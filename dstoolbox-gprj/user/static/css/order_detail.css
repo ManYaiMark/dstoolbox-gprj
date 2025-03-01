@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.order-summary {
+    @apply bg-white p-4 rounded-lg shadow-md;
+}
+
+.order-summary h3 {
+    @apply text-lg font-semibold;
+}
+
+.order-summary p {
+    @apply text-gray-600;
+}
+
+.order-items {
+    @apply bg-white p-4 rounded-lg shadow-md;
+}
+
+.order-items li {
+    @apply flex items-center justify-between border-b py-2;
+}
+
+.order-items img {
+    @apply w-12 h-12 rounded mr-4;
+}
+
+.back-button {
+    @apply mt-6 block text-center bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600;
+}
