@@ -1,0 +1,165 @@
+{% extends 'admin_base.html' %}
+{% load i18n %}
+
+{% block main %}
+
+<head>
+    <title>ระบบสะสมแต้ม</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .btn-toggle.on {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .btn-toggle.off {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .alert-danger {
+            margin-top: 15px;
+            border-radius: 5px;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .alert-danger ul {
+            padding-left: 20px;
+        }
+
+        .btn-success {
+            background-color: #28a745;
+            border-color: #28a745;
+        }
+
+        .btn-success:hover {
+            background-color: #218838;
+            border-color: #1e7e34;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h2 class="text-center my-4">ระบบสะสมแต้ม</h2>
+
+        <!-- Create New Reward Condition -->
+        <form method="POST" action="{% url 'create_reward' %}" class="card p-4 shadow">
+            {% csrf_token %}
+            <h4>เพิ่มเงื่อนไขสะสมแต้มใหม่</h4>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">ยอดซื้อขั้นต่ำ (บาท)</label>
+                    <input type="number" name="min_purchase" class="form-control" min="0" step="5" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">แต้มที่ได้รับต่อการสั่งซื้อ</label>
+                    <select name="points_per_purchase" class="form-control" required>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                        <option value="8">8</option>
+                        <option value="9">9</option>
+                        <option value="10">10</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">แต้มที่ต้องใช้เพื่อแลกส่วนลด</label>
+                    <input type="number" name="points_to_redeem" class="form-control" min="0" step="5" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">ส่วนลดที่ได้รับ (บาท)</label>
+                    <input type="number" name="discount_amount" class="form-control" min="0" step="5" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">วันเริ่มกิจกรรม</label>
+                    <input type="date" name="start_date" class="form-control" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">วันสิ้นสุดกิจกรรม</label>
+                    <input type="date" name="end_date" class="form-control" required>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-success mt-3">เพิ่มเงื่อนไข</button>
+
+            {% if form.errors %}
+            <div class="alert alert-danger">
+                <ul>
+                    {% for field, errors in form.errors.items %}
+                    {% for error in errors %}
+                    <li>{{ error }}</li>
+                    {% endfor %}
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+        </form>
+
+        <!-- List All Reward Conditions -->
+        <h4 class="mt-5">เงื่อนไขสะสมแต้มที่ใช้งานอยู่</h4>
+        <div class="table-responsive">
+            <table class="table table-striped mt-3 shadow">
+                <thead class="table-dark">
+                    <tr>
+                        <th>#</th>
+                        <th>ยอดขั้นต่ำ</th>
+                        <th>แต้มที่ได้รับ</th>
+                        <th>แต้มใช้แลก</th>
+                        <th>ส่วนลด</th>
+                        <th>สิ้นสุด</th>
+                        <th>สถานะ</th>
+                        <th>จัดการ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for reward in rewards %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ reward.min_purchase }} ฿</td>
+                        <td>{{ reward.points_per_purchase }}</td>
+                        <td>{{ reward.points_to_redeem }}</td>
+                        <td>{{ reward.discount_amount }} ฿</td>
+                        <td>
+                            {{ reward.start_date|date:"d M Y" }} -
+                            {{ reward.end_date|date:"d M Y" }}
+                        </td>
+                        <td>
+                            {% if reward.is_active %}
+                            <span class="badge bg-success">เปิดใช้งาน</span>
+                            {% else %}
+                            <span class="badge bg-danger">ปิดใช้งาน</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <form method="POST" action="{% url 'toggle_reward' reward.id %}" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit"
+                                    class="btn btn-sm btn-toggle {% if reward.is_active %}on{% else %}off{% endif %}">
+                                    {% if reward.is_active %}ปิด{% else %}เปิด{% endif %}
+                                </button>
+                            </form>
+
+                            <form method="POST" action="{% url 'delete_reward' reward.id %}" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-danger">ลบ</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center text-muted">ไม่มีเงื่อนไขสะสมแต้มที่สร้างไว้</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+
+{% endblock %}

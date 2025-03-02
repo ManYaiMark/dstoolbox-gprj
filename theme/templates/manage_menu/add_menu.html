@@ -1,0 +1,153 @@
+{% extends 'admin_base.html' %}
+{% load i18n %}
+
+{% block main %}
+<head>
+    <title>Add Menu</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f7fc;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+            appearance: none;
+            outline: none;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            margin-right: 10px;
+            transform: scale(1.2);
+            background-color: white; /* สีพื้นหลังเมื่อไม่ได้เลือก */
+            border: 2px solid #ccc; /* สีขอบเมื่อไม่ได้เลือก */
+        }
+
+        /* เมื่อเช็คบ็อกถูกเลือก */
+        .checkbox-group input[type="checkbox"]:checked {
+            background-color: #4CAF50; /* เปลี่ยนเป็นสีเขียวเมื่อเลือก */
+            border-color: #4CAF50; /* สีขอบเมื่อเลือก */
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            padding: 14px;
+            border-radius: 12px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+            transform: scale(1.02);
+        }
+
+        .button-back {
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        .button-back a {
+            display: inline-block;
+            padding: 10px 15px;
+            text-decoration: none;
+            color: white;
+            background-color: #4CAF50;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        .button-back a:hover {
+            background-color: #4CAF50;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>เพิ่มเมนูใหม่</h1>
+
+        <form method="POST">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="id_name">Name:</label>
+                {{ form.name }}
+            </div>
+            <div class="form-group">
+                <label for="id_description">Description:</label>
+                {{ form.description }}
+            </div>
+            <div class="form-group">
+                <label for="id_price">Price:</label>
+                {{ form.price }}
+            </div>
+            <div class="form-group">
+                <label for="id_image_url">Image URL:</label>
+                {{ form.image_url }}
+            </div>
+            <div class="form-group checkbox-group">
+                {{ form.is_available }}
+                <label for="id_is_available">Available</label>
+            </div>
+            <button type="submit">บันทึกเมนูใหม่</button>
+        </form>
+
+    </div>
+</body>
+{% endblock %}
