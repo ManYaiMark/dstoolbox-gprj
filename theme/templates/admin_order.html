@@ -1,0 +1,27 @@
+{% extends 'admin_base.html' %}
+
+{% block content %}
+<h2>รายการออเดอร์ (สำหรับแอดมิน)</h2>
+<table>
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>ชื่อลูกค้า</th>
+            <th>ราคารวม</th>
+            <th>สถานะ</th>
+            <th>วันที่สั่งซื้อ</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for order in orders %}
+        <tr>
+            <td>{{ order.id }}</td>
+            <td>{{ order.user.username }}</td>
+            <td>{{ order.total_price }}</td>
+            <td>{{ order.get_status_order_display }}</td>
+            <td>{{ order.created_at }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

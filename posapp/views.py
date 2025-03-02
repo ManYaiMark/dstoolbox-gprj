@@ -89,41 +89,37 @@ def manage_menu(request):
 def add_menu(request):
     # ถ้าเป็นการส่งข้อมูลจากฟอร์ม (POST)
     if request.method == 'POST':
-        form = MenuForm(request.POST)
+        form = MenuForm(request.POST, request.FILES)
         if form.is_valid():
-            # บันทึกข้อมูลที่ได้จากฟอร์ม
             form.save()
             # หลังจากบันทึกเสร็จแล้วเปลี่ยนเส้นทางไปที่หน้า manage_menu
             return redirect('manage_menu')
     else:
-        # ถ้าไม่ใช่ POST จะส่งฟอร์มเปล่าให้กรอกข้อมูล
         form = MenuForm()
 
     return render(request, 'manage_menu/add_menu.html', {'form': form})
 
 
 def delete_menu(request, id):
-    # ดึงข้อมูลเมนูที่มี id ตรงกับที่ส่งมา
     menu = get_object_or_404(Menu, id=id)
 
-    # ลบเมนูนั้นออกจากฐานข้อมูล
     menu.delete()
 
-    # หลังจากลบเสร็จแล้วเปลี่ยนเส้นทางกลับไปที่หน้า manage_menu
     return redirect('manage_menu')
 
 
 def edit_menu(request, id):
-    # ดึงเมนูที่ต้องการแก้ไขจากฐานข้อมูล
     menu = get_object_or_404(Menu, id=id)
-
-    # ถ้าเป็นการส่งข้อมูล (POST) จากฟอร์ม
-    if request.method == 'POST':
-        form = MenuForm(request.POST, instance=menu)
+    if request.method == "POST":
+        form = MenuForm(request.POST, request.FILES, instance=menu)
         if form.is_valid():
-            form.save()  # บันทึกการแก้ไข
-            return redirect('manage_menu')  # เปลี่ยนเส้นทางไปยังหน้า manage_menu
+            form.save()
+            return redirect('manage_menu')
     else:
-        form = MenuForm(instance=menu)  # ถ้าเป็นการเรียกหน้าแรกให้โหลดข้อมูลเดิมของเมนู
+        form = MenuForm(instance=menu)
 
     return render(request, 'manage_menu/edit_menu.html', {'form': form, 'menu': menu})
+
+def order_list(request):
+    orders = Order.objects.filter(user=request.user).order_by('-created_at')  # ดึงเฉพาะออเดอร์ของผู้ใช้ที่ล็อกอิน
+    return render(request, 'orders/order_list.html', {'orders': orders})

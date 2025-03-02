@@ -132,7 +132,13 @@
                         <td>{{ menu.name }}</td>
                         <td>{{ menu.description }}</td>
                         <td>฿{{ menu.price }}</td>
-                        <td><img src="{{ menu.image_url }}" alt="{{ menu.name }}"></td>
+                        <td>
+                            {% if menu.image %}
+                                <img src="{{ menu.image.url }}" alt="{{ menu.name }}">
+                            {% else %}
+                                <span>ไม่มีภาพ</span>
+                            {% endif %}
+                        </td>
                         <td class="status {% if menu.is_available %}available{% else %}unavailable{% endif %}">
                             {{ menu.is_available|yesno:"Available,Unavailable" }}
                         </td>
