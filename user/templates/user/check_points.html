@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Check Points</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="flex items-center justify-center min-h-screen bg-blue-100">
+
+<div class="w-full max-w-md p-8 space-y-6 bg-blue-50 shadow-lg rounded-xl border border-blue-300">
+
+    {% if request.session.username %}
+    <h2 class="text-3xl font-bold text-center text-blue-600">แต้มสะสมของคุณ</h2>
+    <!-- ✅ แสดงข้อมูลผู้ใช้ -->
+    <div class="p-4 bg-blue-200 border border-blue-400 rounded-lg shadow-inner text-center">
+        <p class="text-lg font-semibold text-blue-800">👤 ชื่อผู้ใช้: 
+            <span class="font-bold text-blue-900">{{ request.session.username }}</span>
+        </p>
+        <p class="text-lg font-semibold text-blue-800">📧 อีเมล: 
+            <span class="font-bold text-blue-900">{{ request.session.email }}</span>
+        </p>
+    </div>
+
+    <!-- ✅ แสดงแต้มสะสม -->
+    <div class="p-6 text-center bg-blue-300 border border-blue-500 rounded-xl shadow-inner">
+        <p class="text-lg font-semibold text-white">
+            🎉 คุณมี <span class="text-5xl font-extrabold">{{ request.session.total_points }}</span> แต้ม
+        </p>
+    </div>
+    <div class="text-center">
+      <a href="{% url 'menu' %}" class="text-lg font-semibold text-white bg-blue-400 px-5 py-2 rounded-lg shadow-md hover:bg-blue-500 transition duration-300">
+          กลับไปที่เมนู
+      </a>
+    </div>
+    {% else %}
+    <p class=" text-center text-lg font-semibold text-blue-800">กรุณาเพื่อดูแต้มสะสมของคุณ</p>
+    <div class="text-center">
+      <a href="{% url 'login' %}" class="text-lg font-semibold text-white bg-blue-400 px-5 py-2 rounded-lg shadow-md hover:bg-blue-500 transition duration-300">
+          เข้าสู่ระบบ
+      </a>
+  </div>
+    {% endif %} 
+    <!-- ✅ ปุ่มกลับเมนู -->
+
+    
+</div>
+
+</body>
+</html>
+

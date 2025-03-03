@@ -11,7 +11,20 @@
 
     <div class="order-summary bg-white p-4 rounded-lg shadow-md">
         <h3 class="text-lg font-semibold">Order #{{ order.id }}</h3>
-        <p class="text-gray-600">สถานะ: <strong class="text-blue-500">{{ order.status_order }}</strong></p>
+
+        <!-- ✅ แสดง Badge สถานะ -->
+        <p class="text-gray-600 flex items-center">
+            สถานะ:
+            <span class="ml-2 px-3 py-1 text-sm font-semibold text-white rounded-lg
+                {% if order.status_order == 'pending' %} bg-yellow-500
+                {% elif order.status_order == 'preparing' %} bg-blue-500
+                {% elif order.status_order == 'completed' %} bg-green-500
+                {% elif order.status_order == 'cancelled' %} bg-red-500
+                {% endif %}">
+                {{ order.get_status_order_display }}
+            </span>
+        </p>
+
         <p class="font-bold text-xl mt-2">ราคารวม: ฿{{ order.total_price }}</p>
     </div>
 
@@ -20,22 +33,29 @@
         {% for item in order_items %}
             <li class="flex items-center justify-between border-b py-2">
                 <div class="flex items-center">
-                    <img src="{{ item.menu.image_url }}" alt="{{ item.menu.name }}" class="w-12 h-12 rounded mr-4">
+                    <img src="{{ item.menu.image.url }}" alt="{{ item.menu.name }}" class="w-12 h-12 rounded mr-4">
                     <div>
                         <p class="font-medium">{{ item.menu.name }}</p>
                         <p class="text-sm text-gray-600">{{ item.quantity }} x ฿{{ item.unit_price }}</p>
                     </div>
                 </div>
-                <p class="font-bold">฿{{ item.subtotal }}</p>
+                <p class="font-bold">{{ item.subtotal }}฿</p>
             </li>
         {% endfor %}
     </ul>
 
-    {% if order.status_order != 'completed' %}
-        <p class="text-yellow-500 font-medium mt-4">กำลังดำเนินการ...</p>
-    {% else %}
-        <p class="text-green-500 font-medium mt-4">ออเดอร์เสร็จสมบูรณ์!</p>
-    {% endif %}
+    <!-- ✅ แสดงข้อความตามสถานะออเดอร์ -->
+    <div class="mt-4 text-lg font-medium">
+        {% if order.status_order == 'pending' %}
+            <p class="text-yellow-500">รอดำเนินการ...</p>
+        {% elif order.status_order == 'preparing' %}
+            <p class="text-blue-500">กำลังเตรียมอาหาร...</p>
+        {% elif order.status_order == 'completed' %}
+            <p class="text-green-500">🎉 ออเดอร์เสร็จสมบูรณ์!</p>
+        {% elif order.status_order == 'cancelled' %}
+            <p class="text-red-500">❌ ออเดอร์ถูกยกเลิก</p>
+        {% endif %}
+    </div>
 
     <a href="{% url 'menu' %}" class="mt-6 block text-center bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600">
         กลับไปที่เมนู
