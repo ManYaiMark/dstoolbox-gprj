@@ -128,7 +128,7 @@
 		.main-box {
 			width: 100%;
 			max-width: 1200px;
-			height: 95vh;
+			height: auto;
 			background: #fff;
 			border-radius: 10px;
 			box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
@@ -155,12 +155,14 @@
 		<div class="close-btn">
 			<i class="fas fa-times" onclick="toggleSidebar()"></i>
 		</div>
-		<h2>ชื่อร้าน</h2>
+		<h2>น้องอุ้ม<br>อาหารตามสั่ง</h2>
+
 		<a href="{% url 'dashboard' %}"><i class="fas fa-chart-line"></i> <span
 				style="margin-left: 10px;">รายงานยอดการขาย</span></a>
 		<a href="{% url 'manage_menu' %}"><i class="fas fa-utensils"></i> <span
                 style="margin-left: 15px;">เมนู</span></a>
-		<a href="#"><i class="fas fa-receipt"></i> <span style="margin-left: 15px;">ออเดอร์</span></a>
+		<a href="{% url 'admin_orders' %}"><i class="fas fa-receipt"></i> <span
+                style="margin-left: 15px;">ออเดอร์</span></a>
 		<a href="{% url 'reward' %}"><i class="fas fa-gift"></i> <span
 				style="margin-left: 10px;">ระบบสะสมแต้ม</span></a>
 	</div>

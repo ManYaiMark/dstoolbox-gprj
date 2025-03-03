@@ -26,7 +26,10 @@ SECRET_KEY = "django-insecure-rpscars!r349_v@j2b$3g74)-2e_!(48p1rtyy@m=92hur=dl$
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    "127.0.0.1",
+    "2318-49-49-114-187.ngrok-free.app"
+    ]
 
 
 # Application definition
@@ -39,10 +42,11 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "posapp",
-    "django_browser_reload",
+    #"django_browser_reload",
     'tailwind',
     'theme',
     'user',
+    'corsheaders'
 ]
 
 MIDDLEWARE = [
@@ -53,7 +57,8 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "django_browser_reload.middleware.BrowserReloadMiddleware",
+    #"django_browser_reload.middleware.BrowserReloadMiddleware",
+    'corsheaders.middleware.CorsMiddleware'
 ]
 
 ROOT_URLCONF = "dsproject.urls"
@@ -136,3 +141,12 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 TAILWIND_APP_NAME = 'theme'
 NPM_BIN_PATH = r"C:\Program Files\nodejs\npm.cmd"
+
+CORS_ALLOWED_ORIGINS = [
+    "https://2318-49-49-114-187.ngrok-free.app",
+    "http://localhost:8000", 
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://2318-49-49-114-187.ngrok-free.app',  
+]

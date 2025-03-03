@@ -1,6 +1,7 @@
 from django.urls import path,include
 from .views import *
 from . import views
+from django.conf import settings
 from django.conf.urls.static import static
 
 
@@ -15,6 +16,10 @@ urlpatterns = [
     path('admin/menu/add/', views.add_menu, name='add_menu'),
     path('admin/menu/delete/<int:id>/', views.delete_menu, name='delete_menu'),
     path('admin/menu/edit/<int:id>/', views.edit_menu, name='edit_menu'),
+    path('admin/orders/', order_list, name='admin_orders'),
     path('',include('user.urls')), 
 ] 
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

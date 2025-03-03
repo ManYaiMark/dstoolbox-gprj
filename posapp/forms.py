@@ -33,4 +33,4 @@ class RewardForm(forms.ModelForm):
 class MenuForm(forms.ModelForm):
     class Meta:
         model = Menu
-        fields = ['name', 'description', 'price', 'image_url', 'is_available']
+        fields = ['name', 'description', 'price', 'image', 'is_available']
