@@ -1,6 +1,7 @@
 from django.urls import path,include
 from .views import *
 from . import views
+from django.conf.urls.static import static
 
 
 urlpatterns = [
@@ -15,5 +16,5 @@ urlpatterns = [
     path('admin/menu/delete/<int:id>/', views.delete_menu, name='delete_menu'),
     path('admin/menu/edit/<int:id>/', views.edit_menu, name='edit_menu'),
     path('',include('user.urls')), 
-]
+] 
 

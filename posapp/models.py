@@ -64,7 +64,7 @@ class History(models.Model):
     menu = models.ForeignKey(Menu, on_delete=models.CASCADE)
     quantity = models.IntegerField()
     # เพอ่ม  unit_price มา
-    unit_price = models.IntegerField()
+    unit_price = models.IntegerField(default=0)
     price = models.IntegerField()
 
     # เพิ่ม save มาเพื่อยันทึก price ใหม่

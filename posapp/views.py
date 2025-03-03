@@ -3,16 +3,111 @@ from django.contrib.auth.decorators import login_required
 from .models import *
 from .forms import *
 from django.utils import timezone
+import matplotlib.pyplot as plt
+from django.db.models import Sum, Count
+from datetime import timedelta
+from django.conf import settings
+import os
+import matplotlib
+import matplotlib.font_manager as fm
+from django.views.decorators.cache import cache_page
+
+# matplotlib setting
+matplotlib.use('Agg')
 
 # Create your views here.
 
-
 ## ส่วน Admin ##
 # Dashboard สำหรับแอดมิน ยังไม่ทำ ต้องใช้เครื่องมือที่สุ่มได้คาบก่อน
+
+
+def save_plot(fig, filename):
+    static_dir = os.path.join(settings.BASE_DIR, "static/images")
+    os.makedirs(static_dir, exist_ok=True)
+
+    filepath = os.path.join(static_dir, f"{filename}.png")
+    fig.savefig(filepath)
+    plt.close(fig)
+
+    return f"/static/images/{filename}.png"
+
+
+@cache_page(60 * 15)
 def dashboard(request):
-    return render(request, "admin_base.html")
+    today = timezone.now().date()
+
+    # 1. Bar Chart - เมนูที่ขายดีที่สุด
+    top_menus_today = History.objects.filter(order__created_at__date=today) \
+                                     .values('menu__name') \
+                                     .annotate(order_count=Count('id')) \
+                                     .order_by('-order_count')[:5]
+
+    menu_names_today = [entry['menu__name'] for entry in top_menus_today]
+    menu_order_counts = [entry['order_count'] for entry in top_menus_today]
+
+    top_menus_data = list(zip(menu_names_today, menu_order_counts))
+
+    # Bar Chart with color variation
+    colors = ['#FFD700', '#C0C0C0', '#CD7F32', '#FF5733', '#4CAF50']
+
+    fig1, ax1 = plt.subplots(figsize=(15, 3))
+    ax1.bar(menu_names_today, menu_order_counts, color=colors)
+    ax1.tick_params(axis='x', rotation=45)
+
+    save_plot(fig1, 'top_menus_today')
+
+    # 2. Pie Chart - เปรียบเทียบลูกค้าทั่วไป/สมาชิก
+    user_data = Order.objects.filter(created_at__date=today) \
+                             .values('user__role') \
+                             .annotate(order_count=Count('id'))
+
+    roles = ['member' if entry['user__role'] == 'member' else 'guest' for entry in user_data]
+    role_counts = [entry['order_count'] for entry in user_data]
+
+    roles_data = list(zip(roles, role_counts))
+
+    fig2, ax2 = plt.subplots(figsize=(10, 5))
+    ax2.pie(role_counts, labels=roles, autopct='%1.1f%%', startangle=90, colors=['#4CAF50', '#FF5733'])
+
+    save_plot(fig2, 'roles_pie_chart')
+
+    # 3. Line Chart - ยอดขายตามช่วงเวลา
+    sales_by_hour = Order.objects.filter(created_at__date=today) \
+                                  .values('created_at__hour') \
+                                  .annotate(total_sales=Sum('total_price')) \
+                                  .order_by('created_at__hour')
+
+    hours = [entry['created_at__hour'] for entry in sales_by_hour]
+    sales = [entry['total_sales'] or 0 for entry in sales_by_hour]
+
+    sales_data = list(zip(hours, sales))  # Combine hours and sales into a list of tuples
+
+    fig3, ax3 = plt.subplots(figsize=(10, 5))
+    ax3.plot(hours, sales, marker='o', color='#007BFF')
+    ax3.tick_params(axis='x', rotation=45)
+    ax3.spines['top'].set_visible(False)
+    ax3.spines['right'].set_visible(False)
+
+    save_plot(fig3, 'sales_by_hour')
+
+    # Passing image paths and data to the template
+    return render(request, 'admin_dashboard.html', {
+        'top_menus_data': top_menus_data,
+        'roles_data': roles_data,
+        'sales_data': sales_data,  # Added this line
+        'sales_by_hour_img': '/static/images/sales_by_hour.png',
+        'top_menus_today_img': '/static/images/top_menus_today.png',
+        'roles_pie_chart_img': '/static/images/roles_pie_chart.png',
+        'menu_names_today': menu_names_today,
+        'menu_order_counts': menu_order_counts,
+        'role_counts': role_counts,
+        'roles': roles,
+        'hours': hours,
+        'sales': sales
+    })
 
 
+# ส่วนระบบสะสมแต้ม
 # ตรวจสอบแต้มลูกค้าก่อนคอนเฟิร์มออเดอร์
 def check_discount_eligibility(customer):
     reward_setting = Reward.objects.filter(is_active=True).first()
