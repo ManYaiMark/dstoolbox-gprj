@@ -1,8 +1,12 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from .models import *
 from .forms import *
 from django.utils import timezone
+from django.contrib import messages
+from django.http import JsonResponse
+import json
+from .models import Order
 
 # Create your views here.
 
@@ -80,3 +84,82 @@ def delete_reward(request, reward_id):
     reward.delete()
 
     return redirect("reward")
+
+def manage_menu(request):
+    menus = Menu.objects.all()
+    return render(request, 'admin_manage_menu.html', {'menus': menus})
+
+
+def add_menu(request):
+    # ถ้าเป็นการส่งข้อมูลจากฟอร์ม (POST)
+    if request.method == 'POST':
+        form = MenuForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            # หลังจากบันทึกเสร็จแล้วเปลี่ยนเส้นทางไปที่หน้า manage_menu
+            return redirect('manage_menu')
+    else:
+        form = MenuForm()
+
+    return render(request, 'manage_menu/add_menu.html', {'form': form})
+
+
+def delete_menu(request, id):
+    menu = get_object_or_404(Menu, id=id)
+
+    menu.delete()
+
+    return redirect('manage_menu')
+
+
+def edit_menu(request, id):
+    menu = get_object_or_404(Menu, id=id)
+    if request.method == "POST":
+        form = MenuForm(request.POST, request.FILES, instance=menu)
+        if form.is_valid():
+            form.save()
+            return redirect('manage_menu')
+    else:
+        form = MenuForm(instance=menu)
+
+    return render(request, 'manage_menu/edit_menu.html', {'form': form, 'menu': menu})
+
+#จัดการออร์เดอร์
+def admin_order_list(request):
+    # เรียงลำดับออร์เดอร์โดยให้ Pending & Preparing อยู่ด้านบนสุด
+    orders = Order.objects.all().order_by(
+        '-status_order',  # Priority: Pending > Preparing > Completed
+        'created_at'  # เรียงจากออร์เดอร์เก่าก่อนไปใหม่
+    )
+    return render(request, 'order/admin_order_list.html', {'orders': orders})
+
+
+def update_order_status(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+
+    if request.method == "POST":
+        data = json.loads(request.body)
+        new_status = data.get("status")
+        if new_status in dict(Order.STATUS_CHOICES):
+            order.status_order = new_status
+            order.save()
+            return JsonResponse({"message": "อัปเดตสถานะสำเร็จ!", "status": order.status_order})
+
+    return JsonResponse({"error": "Invalid status"}, status=400)
+
+
+def order_detail(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+    return render(request, 'order/order_detail.html', {'order': order})
+
+def admin_order_list(request):
+    orders = Order.objects.all().order_by('-status_order', 'created_at')
+    return render(request, 'admin_order_list.html', {'orders': orders})
+
+
+from django.contrib.auth import logout
+from django.shortcuts import redirect
+
+def logout_view(request):
+    logout(request)
+    return redirect('login')  # เปลี่ยน 'login' เป็นชื่อ URL ที่ต้องการให้เปลี่ยนหน้าไปหลัง logout

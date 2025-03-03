@@ -22,6 +22,7 @@ class Menu(models.Model):
     description = models.TextField()
     price = models.IntegerField()
     image_url = models.URLField()
+    image = models.ImageField(upload_to='menu_images/', null=True, blank=True)
     is_available = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

@@ -1,13 +1,21 @@
 from django.shortcuts import get_object_or_404, render
 from django.shortcuts import redirect
 from posapp.models import Menu, Order, History
+from .forms import CustomUserCreationForm
 
 # เพิ่มลงตะกร้า
 def login(request):
     return render(request, 'user/login.html')
 
 def register(request):
-    return render(request, 'user/register.html')
+    if request.method == 'POST':
+        form = CustomUserCreationForm(request.POST)
+        if form.is_valid():
+            form.save()  # บันทึกผู้ใช้ใหม่
+            return redirect('login')  # เปลี่ยนเส้นทางไปหน้าล็อกอินหลังจากสมัครสมาชิก
+    else:
+        form = CustomUserCreationForm()
+    return render(request, 'user/register.html', {'form': form})
 
 def add_to_cart(request, menu_id):
     user = request.user  # ใช้ user ที่ login

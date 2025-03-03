@@ -29,3 +29,16 @@ class RewardForm(forms.ModelForm):
             cleaned_data['is_active'] = True  # เปิดใช้งานถ้าผ่านวันที่เริ่มต้นแล้ว
 
         return cleaned_data
+
+class MenuForm(forms.ModelForm):
+    class Meta:
+        model = Menu
+        fields = ['name', 'description', 'price', 'image', 'is_available']
+
+class OrderStatusForm(forms.ModelForm):
+    class Meta:
+        model = Order
+        fields = ['status_order']
+        widgets = {
+            'status_order': forms.Select(choices=Order.STATUS_CHOICES),
+        }

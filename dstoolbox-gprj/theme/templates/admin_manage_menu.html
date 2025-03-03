@@ -1,0 +1,157 @@
+{% extends 'admin_base.html' %}
+{% load i18n %}
+
+{% block main %}
+
+<head>
+    <title>ระบบจัดการเมนู</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* เพิ่มสไตล์ให้ดูทันสมัย */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f7fc;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            text-decoration: none;
+            border-radius: 4px;
+            margin: 5px;
+            font-size: 14px;
+            display: inline-block;
+            transition: background-color 0.3s ease;
+        }
+
+        .button:hover {
+            background-color: #45a049;
+        }
+
+        .button-danger {
+            background-color: #f44336;
+        }
+
+        .button-danger:hover {
+            background-color: #e53935;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            font-size: 16px;
+        }
+
+        th {
+            background-color: #f8f8f8;
+            color: #333;
+        }
+
+        td {
+            background-color: #fff;
+            color: #555;
+        }
+
+        td img {
+            max-width: 80px;
+            height: auto;
+            border-radius: 4px;
+        }
+
+        .status {
+            font-weight: bold;
+            text-transform: capitalize;
+        }
+
+        .status.available {
+            color: #4CAF50;
+        }
+
+        .status.unavailable {
+            color: #f44336;
+        }
+
+        .actions a {
+            display: inline-block;
+            margin-right: 10px;
+        }
+
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>จัดการเมนู</h1>
+
+        <a href="{% url 'add_menu' %}" class="button">เพิ่มเมนูใหม่</a>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>ชื่อเมนู</th>
+                    <th>คำอธิบาย</th>
+                    <th>ราคา</th>
+                    <th>รูปภาพ</th>
+                    <th>สถานะ</th>
+                    <th>การกระทำ</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for menu in menus %}
+                    <tr>
+                        <td>{{ menu.name }}</td>
+                        <td>{{ menu.description }}</td>
+                        <td>฿{{ menu.price }}</td>
+                        <td>
+                            {% if menu.image %}
+                                <img src="{{ menu.image.url }}" alt="{{ menu.name }}">
+                            {% else %}
+                                <span>ไม่มีภาพ</span>
+                            {% endif %}
+                        </td>
+                        <td class="status {% if menu.is_available %}available{% else %}unavailable{% endif %}">
+                            {{ menu.is_available|yesno:"Available,Unavailable" }}
+                        </td>
+                        <td class="actions">
+                            <a href="{% url 'edit_menu' menu.id %}" class="button">แก้ไข</a>
+                            <a href="{% url 'delete_menu' menu.id %}" class="button button-danger"
+                               onclick="return confirm('คุณแน่ใจว่าต้องการลบเมนูนี้?');">ลบ</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+
+{% endblock %}

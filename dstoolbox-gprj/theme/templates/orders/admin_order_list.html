@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2 class="text-3xl font-bold text-center my-4">📦 จัดการออร์เดอร์</h2>
+
+<!-- ✅ ตารางรายการออร์เดอร์ -->
+<div class="w-full max-w-6xl mx-auto bg-white p-6 shadow-lg rounded-lg">
+    <table class="w-full border-collapse border border-gray-300 text-center">
+        <thead class="bg-blue-100">
+            <tr>
+                <th class="border px-6 py-4">📅 วันที่</th>
+                <th class="border px-6 py-4">👤 ลูกค้า</th>
+                <th class="border px-6 py-4">💰 ราคา</th>
+                <th class="border px-6 py-4">📌 สถานะ</th>
+                <th class="border px-6 py-4">🛠 จัดการ</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in orders %}
+            <tr class="hover:bg-gray-100 transition">
+                <td class="border px-6 py-4">{{ order.created_at|date:"m/d/Y H:i:s" }}</td>
+                <td class="border px-6 py-4">{{ order.user.username }}</td>
+                <td class="border px-6 py-4 font-semibold">{{ order.total_price }} ฿</td>
+                <td class="border px-6 py-4" id="status-{{ order.id }}">
+                    {% if order.status_order == 'pending' %}
+                    <span class="text-red-500 font-bold">🔴 รอดำเนินการ</span>
+                    {% elif order.status_order == 'preparing' %}
+                    <span class="text-yellow-500 font-bold">🟡 กำลังเตรียม</span>
+                    {% elif order.status_order == 'completed' %}
+                    <span class="text-green-500 font-bold">🟢 เสร็จสิ้น</span>
+                    {% else %}
+                    <span class="text-gray-500 font-bold">❌ ยกเลิก</span>
+                    {% endif %}
+                </td>
+                <td class="border px-6 py-4">
+                    <button class="bg-blue-500 text-white px-4 py-2 rounded" 
+                        onclick="openEditModal({{ order.id }}, '{{ order.status_order }}')">✏️ แก้ไข</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- ✅ Popup Modal แก้ไขสถานะ -->
+<div id="editOrderModal" class="hidden fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center">
+    <div class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+        <h3 class="text-xl font-bold mb-4">🔄 แก้ไขสถานะออร์เดอร์</h3>
+        <label for="orderStatus" class="block text-lg font-medium text-gray-700">สถานะ:</label>
+        <select id="orderStatus" class="w-full p-2 border rounded-lg">
+            <option value="pending">🔴 รอดำเนินการ</option>
+            <option value="preparing">🟡 กำลังเตรียม</option>
+            <option value="completed">🟢 เสร็จสิ้น</option>
+            <option value="cancelled">❌ ยกเลิก</option>
+        </select>
+        <div class="flex justify-end space-x-2 mt-4">
+            <button onclick="closeEditModal()" class="bg-gray-400 text-white px-4 py-2 rounded">❌ ยกเลิก</button>
+            <button onclick="saveOrderStatus()" class="bg-green-500 text-white px-4 py-2 rounded">✅ บันทึก</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let selectedOrderId = null;
+
+    function openEditModal(orderId, currentStatus) {
+        selectedOrderId = orderId;
+        document.getElementById('orderStatus').value = currentStatus;
+        document.getElementById('editOrderModal').classList.remove('hidden');
+    }
+
+    function closeEditModal() {
+        document.getElementById('editOrderModal').classList.add('hidden');
+    }
+
+    function saveOrderStatus() {
+        const newStatus = document.getElementById('orderStatus').value;
+        fetch(`/admin/orders/${selectedOrderId}/update/`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": "{{ csrf_token }}"
+            },
+            body: JSON.stringify({ status: newStatus })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                alert("สถานะถูกอัปเดตเรียบร้อยแล้ว!");
+                document.getElementById(`status-${selectedOrderId}`).innerText = data.status;
+                closeEditModal();
+                location.reload();
+            } else {
+                alert("เกิดข้อผิดพลาด: " + data.error);
+            }
+        });
+    }
+</script>
+
+{% endblock %}
