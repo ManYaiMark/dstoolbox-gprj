@@ -5,11 +5,10 @@ from django.contrib.auth.forms import AuthenticationForm
 from posapp.models import Menu, Order, History, Reward
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.hashers import check_password
-from posapp.models import UserProfile
 from django.contrib.auth import logout
 from django.contrib.auth.hashers import make_password, check_password
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User
+from posapp.models import User
 
 
 def login_and_convert_cart(request):
@@ -52,37 +51,34 @@ def register(request):
         email = request.POST.get('email').strip()
         password = request.POST.get('password').strip()
         confirm_password = request.POST.get('confirm_password').strip()
-        
-        # ตรวจสอบความถูกต้องของข้อมูลที่กรอก
+        role = request.POST.get('role', 'member')  # ค่าเริ่มต้นเป็น 'member'
+
+        # ตรวจสอบว่าชื่อผู้ใช้หรืออีเมลซ้ำหรือไม่
         if User.objects.filter(username=username).exists():
             error = "ชื่อผู้ใช้นี้ถูกใช้งานแล้ว"
         elif User.objects.filter(email=email).exists():
             error = "อีเมลนี้ถูกใช้งานแล้ว"
         elif password != confirm_password:
-            error = "รหัสผ่านไม่ตรงกัน"
+            error = "รหัสผ่านไม่ตรงกัน"  # ตรวจสอบรหัสผ่านซ้ำกัน
         else:
+            # เข้ารหัสรหัสผ่านก่อนบันทึก
+            hashed_password = make_password(password)
+
             # สร้างผู้ใช้ใหม่
-            user = User.objects.create_user(
+            user = User.objects.create(
                 username=username,
                 email=email,
-                password=password
+                password=hashed_password,
+                role=role
             )
-            
-            # สร้าง UserProfile ใหม่
-            user_profile = UserProfile.objects.create(user=user)
-            user_profile.save()  # บันทึกข้อมูล UserProfile
 
-            # เข้าสู่ระบบ
-            login(request, user)
-            
-            # บันทึกข้อมูลใน session
+            # บันทึกข้อมูลผู้ใช้ใน session
             request.session['username'] = user.username
             request.session['email'] = user.email
-            request.session['role'] = user_profile.role
-            request.session['total_points'] = user_profile.points
-            
-            # เปลี่ยนเส้นทางไปที่เมนู
-            return redirect('menu')
+            request.session['role'] = user.role
+            request.session['total_points'] = user.points
+
+            return redirect('menu')  # หลังจากลงทะเบียนเสร็จแล้วให้ไปที่เมนู
 
     return render(request, 'user/register.html', {'error': error})
 

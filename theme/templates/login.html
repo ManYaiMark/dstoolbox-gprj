@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="flex items-center justify-center min-h-screen bg-blue-50">
+
+    <div class="w-full max-w-md p-8 space-y-6 bg-white shadow-lg rounded-xl border border-blue-200">
+        <h2 class="text-3xl font-bold text-center text-blue-700">เข้าสู่ระบบ</h2>
+
+        {% if form.non_field_errors %}
+        <div class="p-3 mb-4 text-sm text-red-600 bg-red-100 border border-red-400 rounded-lg">
+            {{ form.non_field_errors }}
+        </div>
+        {% endif %}
+
+        <form method="POST" class="space-y-4">
+            {% csrf_token %}
+            
+            <div>
+                <label for="username" class="block text-sm font-medium text-blue-700">ชื่อผู้ใช้</label>
+                {{ form.username }}
+                {% if form.username.errors %}
+                    <div class="text-red-600">
+                        {% for error in form.username.errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div>
+                <label for="password" class="block text-sm font-medium text-blue-700">รหัสผ่าน</label>
+                {{ form.password }}
+                {% if form.password.errors %}
+                    <div class="text-red-600">
+                        {% for error in form.password.errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <button type="submit" 
+                    class="w-full px-4 py-2 font-semibold text-white bg-blue-400 rounded-lg shadow-md hover:bg-blue-500 transition duration-300">
+                เข้าสู่ระบบ
+            </button>
+        </form>
+
+</body>
+</html>

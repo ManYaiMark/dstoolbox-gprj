@@ -1,14 +1,14 @@
 from django.shortcuts import get_object_or_404, render
-from django.contrib.auth import login, authenticate
+from django.contrib.auth import login, authenticate, logout
 from django.shortcuts import redirect
 from django.contrib.auth.forms import AuthenticationForm
-from posapp.models import Menu, Order, History
+from posapp.models import Menu, Order, History, Reward
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.hashers import check_password
-from posapp.models import User
-from django.contrib.auth import logout
+
 from django.contrib.auth.hashers import make_password, check_password
 from django.contrib.auth.decorators import login_required
+from posapp.models import User
 
 
 def login_and_convert_cart(request):
@@ -24,7 +24,7 @@ def login_and_convert_cart(request):
         except User.DoesNotExist:
             user = None
             error = "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง"
-
+        
         # ตรวจสอบรหัสผ่าน
         if user and check_password(password, user.password):  
             print("Login success")
@@ -35,13 +35,9 @@ def login_and_convert_cart(request):
             request.session['email'] = user.email
             request.session['role'] = user.role
             request.session['total_points'] = user.points
-
-            # ถ้าเป็น Admin ให้ไปหน้า Dashboard
-            if user.role == "admin":
-                return redirect('dashboard')
-
             
             return redirect('menu')
+        
 
         else:
             error = "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้องนะครับ"  
@@ -49,15 +45,13 @@ def login_and_convert_cart(request):
     return render(request, 'user/login.html', {'error': error})
 
 def register(request):
-
-    cart = request.session.get('cart', {})
     error = None
     if request.method == "POST":
         username = request.POST.get('username').strip()
         email = request.POST.get('email').strip()
         password = request.POST.get('password').strip()
         confirm_password = request.POST.get('confirm_password').strip()
-        role = request.POST.get('role', 'member')  
+        role = request.POST.get('role', 'member')  # ค่าเริ่มต้นเป็น 'member'
 
         # ตรวจสอบว่าชื่อผู้ใช้หรืออีเมลซ้ำหรือไม่
         if User.objects.filter(username=username).exists():
@@ -65,9 +59,9 @@ def register(request):
         elif User.objects.filter(email=email).exists():
             error = "อีเมลนี้ถูกใช้งานแล้ว"
         elif password != confirm_password:
-            error = "รหัสผ่านไม่ตรงกัน"  
+            error = "รหัสผ่านไม่ตรงกัน"  # ตรวจสอบรหัสผ่านซ้ำกัน
         else:
-            
+            # เข้ารหัสรหัสผ่านก่อนบันทึก
             hashed_password = make_password(password)
 
             # สร้างผู้ใช้ใหม่
@@ -77,14 +71,15 @@ def register(request):
                 password=hashed_password,
                 role=role
             )
-            
+
+            # บันทึกข้อมูลผู้ใช้ใน session
             request.session['username'] = user.username
             request.session['email'] = user.email
             request.session['role'] = user.role
             request.session['total_points'] = user.points
 
-            return redirect('menu')  
-    request.session['cart'] = cart
+            return redirect('menu')  # หลังจากลงทะเบียนเสร็จแล้วให้ไปที่เมนู
+
     return render(request, 'user/register.html', {'error': error})
 
 # ออกจากระบบ
@@ -190,13 +185,20 @@ def order_status(request):
     if request.method == "POST":
         if cart:
             print("Cart")
-          
+
+            reward_setting = Reward.objects.filter(is_active=True).first()
+            
+            use_coupon = request.POST.get('use_coupon')
+
+
             order = Order.objects.create(
                 user=user,  
                 total_price=0,  
                 status_order='pending'  
             )
             total_price = 0
+
+            
 
             for menu_id, item in cart.items():
                 menu_item = get_object_or_404(Menu, id=int(menu_id))
@@ -208,6 +210,13 @@ def order_status(request):
                     price=item['quantity'] * item['price']
                 )
                 total_price += order_item.price
+
+            if use_coupon:
+                if reward_setting and user.points >= reward_setting.points_to_redeem:
+                    discount = reward_setting.discount_amount
+                    total_price -= discount  # หักส่วนลดจากราคาทั้งหมด
+                    user.points -= reward_setting.points_to_redeem  # หักคะแนนสะสม
+                    user.save()
 
             # อัปเดตราคา
             order.total_price = total_price
