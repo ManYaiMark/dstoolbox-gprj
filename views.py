@@ -5,11 +5,10 @@ from django.contrib.auth.forms import AuthenticationForm
 from posapp.models import Menu, Order, History, Reward
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.hashers import check_password
-from posapp.models import UserProfile
 from django.contrib.auth import logout
 from django.contrib.auth.hashers import make_password, check_password
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User
+from posapp.models import User
 
 
 def login_and_convert_cart(request):
