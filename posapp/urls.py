@@ -16,7 +16,6 @@ urlpatterns = [
     path('admin/menu/add/', views.add_menu, name='add_menu'),
     path('admin/menu/delete/<int:id>/', views.delete_menu, name='delete_menu'),
     path('admin/menu/edit/<int:id>/', views.edit_menu, name='edit_menu'),
-    path('admin/orders/', order_list, name='admin_orders'),
     path('accounts/login/', login_view, name='login'),
     path('admin/orders/', views.manage_orders, name='orders'), 
     path('admin/orders/<int:order_id>/detail/', detail_order, name='details'),   
