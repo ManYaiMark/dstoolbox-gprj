@@ -7,8 +7,10 @@ import matplotlib.pyplot as plt
 from django.db.models import Sum, Count
 from django.conf import settings
 import os
+from django.contrib.auth import logout, login
 import matplotlib
 from django.views.decorators.cache import cache_page
+from django.contrib.auth.forms import AuthenticationForm
 
 # matplotlib setting
 plt.rcParams["font.family"] = "TH Sarabun New"
@@ -29,6 +31,18 @@ def save_plot(fig, filename):
 
     return f"/static/images/{filename}.png"
 
+def login_view(request):
+    if request.method == "POST":
+        form = AuthenticationForm(data=request.POST)
+        if form.is_valid():
+            user = form.get_user()
+            login(request, user)
+            return redirect("dashboard")
+    else:
+        form = AuthenticationForm()
+    return render(request, "login.html", {"form": form})
+
+@login_required
 def dashboard(request):
     today = timezone.now().date()
 
