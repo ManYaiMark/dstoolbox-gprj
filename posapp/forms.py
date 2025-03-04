@@ -34,3 +34,11 @@ class MenuForm(forms.ModelForm):
     class Meta:
         model = Menu
         fields = ['name', 'description', 'price', 'image', 'is_available']
+        
+class OrderStatusForm(forms.ModelForm):
+    class Meta:
+        model = Order
+        fields = ['status_order']
+        widgets = {
+            'status_order': forms.Select(choices=Order.STATUS_CHOICES),
+        }

@@ -43,11 +43,11 @@
 
         <!-- Pie Chart -->
         <div class="w-full md:w-2/5">
-            <h2 class="text-2xl font-bold">ประเภทลูกค้าที่มาสั่งอาหารวันนี้</h2>
+            <h2 class="text-2xl font-bold">สถานะคำสั่งซื้อในวันนี้</h2>
             
-            {% if has_roles_data %}
+            {% if has_order_status_data %}
                 <div class="relative flex justify-center">
-                    <img src="{{ roles_pie_chart_img }}" 
+                    <img src="{{ order_status_today_img }}" 
                          alt="Pie Chart" 
                          class="w-full h-auto rounded-lg shadow-md cursor-pointer" 
                          onclick="openFullScreen(this)">

@@ -16,7 +16,11 @@ urlpatterns = [
     path('admin/menu/add/', views.add_menu, name='add_menu'),
     path('admin/menu/delete/<int:id>/', views.delete_menu, name='delete_menu'),
     path('admin/menu/edit/<int:id>/', views.edit_menu, name='edit_menu'),
-    path('admin/orders/', order_list, name='admin_orders'),
+    path('admin/orders/', views.manage_orders, name='orders'), 
+    path('admin/orders/<int:order_id>/detail/', detail_order, name='details'),   
+    path('admin/update-order-status/<int:order_id>/', views.update_order_status, name='update_order_status'),
+    path('admin/update/<int:order_id>/', views.update_order, name='update_order'),
+    path('admin/delete/<int:order_id>/', views.delete_order, name='delete_order'),
     path('',include('user.urls')), 
 ] 
 

@@ -8,7 +8,8 @@ from django.db.models import Sum, Count
 from django.conf import settings
 import os
 import matplotlib
-from django.views.decorators.cache import cache_page
+from django.contrib import messages
+from django.http import HttpResponse
 
 # matplotlib setting
 plt.rcParams["font.family"] = "TH Sarabun New"
@@ -16,6 +17,7 @@ plt.rcParams.update({"font.size": 24})
 matplotlib.use("Agg")
 
 # Create your views here.
+
 
 ## ส่วน Admin ##
 # Dashboard สำหรับแอดมิน ยังไม่ทำ ต้องใช้เครื่องมือที่สุ่มได้คาบก่อน
@@ -29,6 +31,7 @@ def save_plot(fig, filename):
 
     return f"/static/images/{filename}.png"
 
+
 def dashboard(request):
     today = timezone.now().date()
 
@@ -37,7 +40,7 @@ def dashboard(request):
         History.objects.filter(order__created_at__date=today)
         .values("menu__name")
         .annotate(order_count=Count("id"))
-         .order_by("-order_count")[:5]
+        .order_by("-order_count")[:5]
     )
 
     has_top_menus_data = bool(top_menus_today)
@@ -53,49 +56,58 @@ def dashboard(request):
         menu_order_counts = [entry["order_count"] for entry in top_menus_today]
         fig, ax = plt.subplots(figsize=(20, 5))
         ax.set_xlabel("เมนู")
-        ax.set_ylabel("จำนวนการสั่งซื้อ", rotation='horizontal', ha='right')
+        ax.set_ylabel("จำนวนการสั่งซื้อ", rotation="horizontal", ha="right")
 
         colors = ["#FFD700", "#C0C0C0", "#CD7F32", "#1adbe4", "#a71ae4"]
         ax.bar(menu_names_today, menu_order_counts, color=colors)
         ax.tick_params(axis="y", rotation=0)  # ปรับการหมุนของ labels แกน Y
 
         ax.set_yticks(range(0, max(menu_order_counts) + 1))
-        
+
         fig.tight_layout()
-        
+
         save_plot(fig, "top_menus_today")  # Save the bar chart
     else:
         menu_data_today = []
 
-    # 2. Pie Chart - เปรียบเทียบลูกค้าทั่วไป/สมาชิก
-    user_data = (
+    # 2. Pie Chart - เปรียบเทียบสถานะคำสั่งซื้อ
+    order_status_data = (
         Order.objects.filter(created_at__date=today)
-        .values("user__role")
-        .annotate(order_count=Count("id"))
+        .values("status_order")  
+        .annotate(total_orders=Count("id"))
+        .order_by("status_order")
     )
 
-    has_roles_data = bool(user_data)
-    roles_data = [
-        {
-            "role": "สมาชิก" if entry["user__role"] == "member" else "ลูกค้าทั่วไป",
-            "order_count": entry["order_count"],
-        }
-        for entry in user_data
+    has_order_status_data = bool(order_status_data)
+    status_data = [
+        {"status": entry["status_order"], "total_orders": entry["total_orders"]}
+        for entry in order_status_data
     ]
 
-    if has_roles_data:
-        # Create Pie Chart
-        roles = [entry["role"] for entry in roles_data]
-        role_counts = [entry["order_count"] for entry in roles_data]
-        fig2, ax2 = plt.subplots(figsize=(8, 7))
-        ax2.pie(
-            role_counts,
-            labels=roles,
-            autopct="%1.1f%%",
-            startangle=90,
-            colors=["#FF5733", "#5cb85c"],
-        )
-        save_plot(fig2, "roles_pie_chart")  # Save the pie chart
+    if has_order_status_data:
+        statuses_translation = {
+            "pending": "รอดำเนินการ",
+            "preparing": "กำลังเตรียม",
+            "completed": "สำเร็จ",
+            "cancelled": "ยกเลิก"
+        }
+
+    statuses = [statuses_translation.get(entry["status"], entry["status"]) for entry in status_data]
+    total_orders = [entry["total_orders"] for entry in status_data]
+    
+    fig3, ax3 = plt.subplots(figsize=(8, 7))
+    ax3.pie(
+        total_orders,
+        labels=statuses,
+        autopct="%1.1f%%",
+        startangle=90,
+        colors=["#FF6347", "#FFD700", "#32CD32", "#808080"],
+    )
+    ax3.axis('equal')  
+    ax3.set_title("สถานะคำสั่งซื้อในวันนี้")
+
+    save_plot(fig3, "order_status_today")  
+
 
     # 3. Line Chart - ยอดขายตามช่วงเวลา
     sales_by_hour = (
@@ -118,14 +130,16 @@ def dashboard(request):
         fig3, ax3 = plt.subplots(figsize=(12, 7))
         ax3.plot(hours, sales, marker="o", color="green")
         ax3.set_xlabel("ช่วงเวลา")
-        ax3.set_ylabel("ยอดขาย (บาท)", rotation='horizontal', ha='right')
-        
+        ax3.set_ylabel("ยอดขาย (บาท)", rotation="horizontal", ha="right")
+
         # เพิ่มเส้นประ (grid lines)
-        ax3.grid(True, linestyle='--', color='gray', alpha=0.7)
-        
+        ax3.grid(True, linestyle="--", color="gray", alpha=0.7)
+
         # ปรับ tick ของแกน X ให้เป็นช่วงเวลา 24 ชั่วโมง
-        ax3.set_xticks(range(0, 24, 6))  # กำหนดให้ tick ของแกน X แสดงที่ 0, 4, 8, 12, 16, 20
-        ax3.set_xticklabels([f'{i}:00' for i in range(0, 24, 6)])  # ตั้งค่าตัวอักษรให้เป็นเวลา
+        ax3.set_xticks(
+            range(0, 24, 6)
+        )  # กำหนดให้ tick ของแกน X แสดงที่ 0, 4, 8, 12, 16, 20
+        ax3.set_xticklabels([f"{i}:00" for i in range(0, 24, 6)])  # ตั้งค่าตัวอักษรให้เป็นเวลา
         fig3.tight_layout()
         save_plot(fig3, "sales_by_hour")  # Save the line chart
 
@@ -135,13 +149,13 @@ def dashboard(request):
         {
             "has_top_menus_data": has_top_menus_data,
             "menu_data_today": menu_data_today,
-            "has_roles_data": has_roles_data,
-            "roles_data": roles_data,
+            "has_order_status_data": has_order_status_data,
+            "status_data": status_data,
             "has_sales_data": has_sales_data,
             "sales_data": sales_data,
             "sales_by_hour_img": "/static/images/sales_by_hour.png",
             "top_menus_today_img": "/static/images/top_menus_today.png",
-            "roles_pie_chart_img": "/static/images/roles_pie_chart.png",
+            "order_status_today_img": "/static/images/order_status_today.png",
         },
     )
 
@@ -257,8 +271,73 @@ def edit_menu(request, id):
     return render(request, "manage_menu/edit_menu.html", {"form": form, "menu": menu})
 
 
-def order_list(request):
-    orders = Order.objects.filter(user=request.user).order_by(
-        "-created_at"
-    )  # ดึงเฉพาะออเดอร์ของผู้ใช้ที่ล็อกอิน
-    return render(request, "orders/order_list.html", {"orders": orders})
+# จัดการออร์เดอร์
+
+
+def manage_orders(request):
+    status_filter = request.GET.get("status")
+    if status_filter:
+        orders = Order.objects.filter(status_order=status_filter).order_by(
+            "-created_at"
+        )
+    else:
+        orders = Order.objects.all().order_by("-created_at")
+
+    user_filter = request.GET.get("user")
+    if user_filter:
+        orders = orders.filter(user__username__icontains=user_filter)
+
+    return render(request, "orders/manage_orders.html", {"orders": orders})
+
+
+def update_order(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+
+    if request.method == "POST":
+        order.total_price = float(request.POST.get("total_price"))
+        order.status_order = request.POST.get("status")
+        order.save()
+        messages.success(request, f"Order {order.id} updated successfully.")
+        return redirect("orders")
+
+    return render(request, "orders/update_order.html", {"order": order})
+
+
+def delete_order(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+    order.delete()
+    messages.success(request, "Order deleted successfully!")
+    return redirect("orders")
+
+
+# ✅ แสดงหน้าดูออร์เดอร์
+def detail_order(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+
+    # ดึงรายการ History ที่เกี่ยวข้องกับ Order นี้
+    order_items = History.objects.filter(order=order)
+
+    return render(
+        request, "orders/details.html", {"order": order, "order_items": order_items}
+    )
+
+
+# ✅ อัปเดตสถานะออร์เดอร์
+def update_order_status(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+
+    if request.method == "POST":
+        new_status = request.POST.get("status_order")
+        if new_status in dict(Order.STATUS_CHOICES):
+            order.status_order = new_status
+            order.save()
+            
+            # ตรวจสอบว่าสถานะถูกอัปเดต
+            if order.status_order == new_status:
+                return redirect("orders")
+            else:
+                return HttpResponse("ไม่สามารถอัปเดตสถานะได้", status=500)
+        else:
+            return HttpResponse("สถานะไม่ถูกต้อง", status=400)
+
+    return redirect("orders")

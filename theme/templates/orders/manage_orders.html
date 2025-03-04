@@ -1,0 +1,96 @@
+{% extends 'admin_base.html' %}
+{% load i18n %}
+
+{% block main %}
+<div class="flex flex-col justify-center items-center min-h-screen bg-gray-100">
+    <div class="w-full max-w-5xl mx-auto p-8 bg-white shadow-2xl rounded-2xl">
+        <h2 class="text-center text-4xl font-extrabold text-gray-900 mb-8">จัดการคำสั่งซื้อ</h2>
+
+        <!-- ตารางแสดงรายการคำสั่งซื้อ -->
+        <div class="mt-10 bg-white shadow-lg rounded-xl p-6">
+            <h3 class="text-xl font-semibold text-gray-700 text-center mb-4">รายการคำสั่งซื้อ</h3>
+            <div class="overflow-x-auto">
+                <table class="w-full border-collapse border border-gray-300 rounded-xl shadow-md text-center text-lg">
+                    <thead class="bg-black text-white">
+                        <tr>
+                            <th class="border px-6 py-4">👤 ชื่อผู้ใช้</th>
+                            <th class="border px-6 py-4">💰 ยอดรวม</th>
+                            <th class="border px-6 py-4">📌 สถานะ</th>
+                            <th class="border px-6 py-4">⚙️ จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if orders %}
+                        {% for order in orders %}
+                        <tr class="hover:bg-gray-100 transition">
+                            <td class="border px-6 py-4">{{ order.user.username }}</td>
+                            <td class="border px-6 py-4 font-semibold text-green-600">{{ order.total_price }} ฿</td>
+                            <td class="border px-6 py-4">
+                                <form method="POST" action="{% url 'update_order_status' order.id %}">
+                                    {% csrf_token %}
+                                    <select name="status_order" data-order-id="{{ order.id }}"
+                                        class="order-status-dropdown border px-4 py-2 rounded-lg text-md shadow-sm bg-gray-100 cursor-pointer">
+                                        <option value="pending" {% if order.status_order == 'pending' %}selected{% endif %}>⚠ รอดำเนินการ</option>
+                                        <option value="preparing" {% if order.status_order == 'preparing' %}selected{% endif %}>🍳 กำลังเตรียมอาหาร</option>
+                                        <option value="completed" {% if order.status_order == 'completed' %}selected{% endif %}>✅ สำเร็จ</option>
+                                        <option value="cancelled" {% if order.status_order == 'cancelled' %}selected{% endif %}>❌ ยกเลิก</option>
+                                    </select>
+                                    <button type="submit" class="hidden"></button> <!-- Add button to trigger form submit -->
+                                </form>
+                            </td>
+                            <td class="border px-6 py-4">
+                                <div class="flex justify-center space-x-3">
+                                    <a href="{% url 'details' order.id %}"
+                                        class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition shadow-md">
+                                        📋 ดู
+                                    </a>
+                                    <a href="{% url 'delete_order' order.id %}"
+                                        class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition shadow-md">
+                                        🗑 ลบ
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="border px-6 py-6 text-gray-500 text-lg">
+                                🚫 ไม่มีคำสั่งซื้อ 🚫
+                            </td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.querySelectorAll(".order-status-dropdown").forEach(select => {
+    select.addEventListener("change", function () {
+        let orderId = this.dataset.orderId;
+        let newStatus = this.value;
+        let csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
+
+        fetch(`/admin/update-order-status/${orderId}/`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "X-CSRFToken": csrfToken
+            },
+            body: `status_order=${newStatus}`  // ส่งค่าตามที่ Django คาดหวัง
+        }).then(response => response.json())
+          .then(data => {
+              if (data.success) {
+                  alert(`อัปเดตสถานะเป็น ${newStatus} สำเร็จ!`);
+                  location.reload();  // รีเฟรชหน้าเมื่อสำเร็จ
+              } else {
+                  alert(data.message || "เกิดข้อผิดพลาด!");
+              }
+          }).catch(error => console.error("Error:", error));
+    });
+});
+</script>
+
+{% endblock %}

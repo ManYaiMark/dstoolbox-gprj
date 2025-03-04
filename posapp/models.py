@@ -1,21 +1,27 @@
 from django.db import models
-from django.utils.timezone import now
+from datetime import date
+from django.contrib.auth.models import AbstractUser
 
 
-# ตรงนี้ต้องแก้ไขเพิ่มเติม ถ้าจพทำระบบล็อคอิน
-class User(models.Model):
-    username = models.CharField(max_length=255, unique=True)
-    password_hash = models.CharField(max_length=255)
-    email = models.EmailField(unique=True)
-    role = models.CharField(max_length=50)
-    created_at = models.DateTimeField(auto_now_add=True)
+class User(AbstractUser):
+    role = models.CharField(max_length=50, default='member')
     points = models.IntegerField(default=0)
+
+    
+    # เพิ่ม related_name เพื่อหลีกเลี่ยงการชนกับ User ของ Django
+    groups = models.ManyToManyField(
+        'auth.Group', 
+        related_name='custom_user_set',  # เพิ่ม related_name สำหรับฟิลด์ groups
+        blank=True
+    )
+    user_permissions = models.ManyToManyField(
+        'auth.Permission',
+        related_name='custom_user_permissions',  # เพิ่ม related_name สำหรับฟิลด์ user_permissions
+        blank=True
+    )
 
     def __str__(self):
         return self.username
-    
-    def is_member(self):
-        return self.role == "member"
 
 class Menu(models.Model):
     name = models.CharField(max_length=255)
@@ -31,16 +37,21 @@ class Menu(models.Model):
 
 # เราแก้ไขตรงนี้ ดดยการเปลี่ยน def save กับเพิ่ม status_choices
 class Order(models.Model): 
+    PENDING = 'pending'
+    PREPARING = 'preparing'
+    COMPLETED = 'completed'
+    CANCELLED = 'cancelled'
+
     STATUS_CHOICES = [
-        ('pending', 'Pending'),
-        ('preparing', 'Preparing'),
-        ('completed', 'Completed'),
-        ('cancelled', 'Cancelled'),
+        (PENDING, 'รอดำเนินการ'),
+        (PREPARING, 'กำลังเตรียมอาหาร'),
+        (COMPLETED, 'สำเร็จ'),
+        (CANCELLED, 'ยกเลิก')
     ]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     total_price = models.FloatField()
-    status_order = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    status_order = models.CharField(max_length=20, choices=STATUS_CHOICES, default=PENDING)
     complete = models.BooleanField(default=False)  
     points_earned = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -86,4 +97,4 @@ class Reward(models.Model):
     is_active = models.BooleanField(default=True)
 
     def is_within_promo(self):
-        return self.is_active and self.start_date <= now() <= self.end_date
+        return self.is_active and self.start_date <= date.today() <= self.end_date
