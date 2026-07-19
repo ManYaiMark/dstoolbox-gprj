@@ -1,15 +1,11 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends 'user/base.html' %}
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Check Points</title>
-    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="flex items-center justify-center min-h-screen bg-blue-100">
-
+{% block content %}
+<div class="flex-1 flex items-center justify-center">
 <div class="w-full max-w-md p-8 space-y-6 bg-blue-50 shadow-lg rounded-xl border border-blue-300">
-
+    {% csrf_token %}
     {% if request.session.username %}
     <h2 class="text-3xl font-bold text-center text-blue-600">แต้มสะสมของคุณ</h2>
     <!-- ✅ แสดงข้อมูลผู้ใช้ -->
@@ -25,7 +21,7 @@
     <!-- ✅ แสดงแต้มสะสม -->
     <div class="p-6 text-center bg-blue-300 border border-blue-500 rounded-xl shadow-inner">
         <p class="text-lg font-semibold text-white">
-            🎉 คุณมี <span class="text-5xl font-extrabold">{{ request.session.total_points }}</span> แต้ม
+            🎉 คุณมี <span class="text-5xl font-extrabold">{{ total_points }}</span> แต้ม
         </p>
     </div>
     <div class="text-center">
@@ -46,6 +42,6 @@
     
 </div>
 
-</body>
-</html>
+</div>
+{% endblock %}
 

@@ -6,6 +6,7 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('', menu_view, name='menu'),# menu/
+    path('my-orders/', my_orders, name='my_orders'),
     path('order/<int:order_id>/', order_detail_view, name='order_detail'),
     path('order_status/', order_status, name='order_status'),
 
@@ -17,6 +18,7 @@ urlpatterns = [
     path('cart/clear/', clear_cart, name='clear_cart'),
 
     path('login/', login_and_convert_cart, name='login'),
+
     path('logout/', logout_view, name='logout'),
     path('register/', register, name='register'),
     path('check_points/', check_points, name='check_points'),

@@ -8,10 +8,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="{% static 'css/base.css' %}">
 </head>
-<body class="bg-gray-100">
+<body class="min-h-screen bg-blue-100 flex flex-col">
 
     <!-- Header -->
-    <header class="bg-blue-600 text-white p-4 shadow-md">
+    <header class="bg-blue-600 text-white p-4 shadow-md sticky top-0 z-50">
         <div class="container mx-auto flex justify-between items-center">
             <h1 class="text-xl font-bold"><a href="{% url 'menu' %}">🍽 ระบบสั่งอาหาร</a></h1>
 
@@ -27,7 +27,7 @@
             <nav class="hidden lg:flex">
                 <ul class="flex space-x-4">
                     <li><a href="{% url 'menu' %}" class="hover:underline">เมนู</a></li>
-                    <li><a href="{% url 'order_detail' order_id=1 %}" class="hover:underline">ออเดอร์ของฉัน</a></li>
+                    <li><a href="{% url 'my_orders' %}" class="hover:underline">ออเดอร์ของฉัน</a></li>
                     <li><a href="{% url 'check_points' %}" class="hover:underline">คะแนนของฉัน</a></li>
                     {% if request.session.username %}
                         <li><a href="{% url 'logout' %}" class="hover:underline">ออกจากระบบ</a></li>
@@ -42,7 +42,7 @@
         <div id="mobile-menu" class="hidden bg-blue-700 lg:hidden">
             <ul class="flex flex-col space-y-2 p-4 text-white">
                 <li><a href="{% url 'menu' %}" class="hover:underline">เมนู</a></li>
-                <li><a href="{% url 'order_detail' order_id=1 %}" class="hover:underline">ออเดอร์ของฉัน</a></li>
+                <li><a href="{% url 'my_orders' %}" class="hover:underline">ออเดอร์ของฉัน</a></li>
                 <li><a href="{% url 'check_points' %}" class="hover:underline">คะแนนของฉัน</a></li>
                 {% if request.session.username %}
                     <li><a href="{% url 'logout' %}" class="hover:underline">ออกจากระบบ</a></li>
@@ -54,7 +54,7 @@
     </header>
 
     <!-- Main Content -->
-    <main class="container max-w-full px-4 md:px-8 mx-auto py-4">
+    <main class="flex-1 w-full px-4 md:px-8 py-4 flex flex-col">
         {% block content %}
         {% endblock %}
     </main>

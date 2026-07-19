@@ -5,7 +5,7 @@
 
 {% block content %}
 <link rel="stylesheet" href="{% static 'css/order_detail.css' %}">
-
+{% csrf_token %}
 <div class="container mx-auto p-4">
     <h2 class="text-2xl font-bold mb-4">รายละเอียดออเดอร์</h2>
 
@@ -39,9 +39,27 @@
                         <p class="text-sm text-gray-600">{{ item.quantity }} x ฿{{ item.unit_price }}</p>
                     </div>
                 </div>
-                <p class="font-bold">{{ item.subtotal }}฿</p>
+                <p class="font-bold">{{ item.price }} ฿</p>
             </li>
         {% endfor %}
+        <div class="flex justify-end">
+            <div class="grid grid-cols-[auto_auto] gap-x-4 text-right">
+                <p>Subtotal:</p>
+                <p>{{ order.total_price|add:order.discount_amount }} ฿</p>
+                
+                <p>Points used:</p>
+                <p>{{ order.points_used }}</p>
+                
+                <p>Discount:</p>
+                <p class="text-red-500">-{{ order.discount_amount }} ฿</p>
+                
+                <p class="font-bold">Total paid:</p>
+                <p class="font-bold text-green-600">{{ order.total_price }} ฿</p>
+                
+                <p>Points earned:</p>
+                <p>{{ order.points_earned }}</p>
+            </div>
+        </div>
     </ul>
 
     <!-- ✅ แสดงข้อความตามสถานะออเดอร์ -->

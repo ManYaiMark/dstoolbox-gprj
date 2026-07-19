@@ -8,19 +8,6 @@ class User(AbstractUser):
     role = models.CharField(max_length=50, default='member')
     points = models.IntegerField(default=0)
 
-    
-    # เพิ่ม related_name เพื่อหลีกเลี่ยงการชนกับ User ของ Django
-    groups = models.ManyToManyField(
-        'auth.Group', 
-        related_name='custom_user_set',  # เพิ่ม related_name สำหรับฟิลด์ groups
-        blank=True
-    )
-    user_permissions = models.ManyToManyField(
-        'auth.Permission',
-        related_name='custom_user_permissions',  # เพิ่ม related_name สำหรับฟิลด์ user_permissions
-        blank=True
-    )
-
     def __str__(self):
         return self.username
 

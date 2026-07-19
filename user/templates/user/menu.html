@@ -7,8 +7,8 @@
 <link rel="stylesheet" href="{% static 'css/menu.css' %}">
 
 <div class="container mx-auto px-4 py-6">
-    <h2 class="text-2xl font-bold text-gray-800 mb-4">เมนูอาหาร</h2>
-
+    <!-- <h2 class="text-2xl font-bold text-gray-800 mb-4">เมนูอาหาร</h2> -->
+    <h1 class="text-3xl font-bold text-center text-blue-700 mb-6">เมนูอาหาร</h1>
     <!-- ✅ Grid เมนูอาหาร (Responsive) -->
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {% for menu in menus %}
@@ -29,6 +29,18 @@
     </div>
 
     <!-- ✅ ปุ่ม "ดูตะกร้า" แบบลอย -->
+    {% if page_obj.paginator.num_pages > 1 %}
+    <nav class="mt-8 flex items-center justify-center gap-4" aria-label="Menu pages">
+        {% if page_obj.has_previous %}
+        <a class="rounded bg-gray-200 px-4 py-2 hover:bg-gray-300" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+        {% endif %}
+        <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}
+        <a class="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600" href="?page={{ page_obj.next_page_number }}">Next</a>
+        {% endif %}
+    </nav>
+    {% endif %}
+
     <a href="{% url 'cart' %}" class="fixed bottom-6 right-6 bg-blue-500 text-white px-5 py-3 rounded-full shadow-lg flex items-center hover:bg-blue-600 transition">
         <span class="mr-2">ดูตะกร้า</span> 🛒
     </a>

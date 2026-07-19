@@ -49,16 +49,33 @@
     {% csrf_token %}
     <div class="flex justify-between ">
     <p class="text-xl font-bold mt-4">รวมทั้งหมด: ฿{{ total_price }}</p>
-    <div class="flex justify-center items-center mt-4">
-      <label for="use_coupon" class="mr-2">ใช้คูปองหรือไม่:</label>
-      <input type="checkbox" name="use_coupon" id="use_coupon" value="1">
-    </div>
   </div>
     <div class="flex justify-center">
-      <form method="POST" action="{% url 'order_status' %}" class="items-center w-64 mt-4 block text-center bg-blue-600 text-white py-3 px-2 rounded hover:bg-blue-400">
-        
+      <form method="POST" action="{% url 'order_status' %}" class="mt-4 w-full max-w-md">
+        {% csrf_token %}
+        {% if reward %}
+          <div class="mb-3 rounded-lg border border-yellow-300 bg-yellow-50 p-4 text-left text-sm text-gray-800">
+              <p class="font-semibold text-yellow-800">คูปองคะแนนที่ใช้ได้วันนี้</p>
+              <p class="mt-1">ซื้อขั้นต่ำ ฿{{ reward.min_purchase }} รับส่วนลด ฿{{ reward.discount_amount }}</p>
+              <p>ใช้ {{ reward.points_to_redeem }} แต้ม · แต้มของคุณ: {{ user_points }}</p>
 
-        <button class="w-64">
+              {% if can_redeem %}
+              <label class="mt-3 flex cursor-pointer items-center gap-3 rounded-md bg-white p-3 shadow-sm">
+                  <input type="checkbox" name="use_coupon" value="1" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                  <span class="font-medium">ใช้คูปองนี้กับออเดอร์ของฉัน</span>
+              </label>
+              {% elif not meets_min_purchase %}
+              <p class="mt-3 rounded-md bg-white p-3 text-orange-700">
+                  ยอดในตะกร้ายังไม่ถึงขั้นต่ำ ต้องเพิ่มอีก ฿{{ amount_to_minimum }}
+              </p>
+              {% else %}
+              <p class="mt-3 rounded-md bg-white p-3 text-orange-700">
+                  แต้มไม่เพียงพอ ต้องมี {{ reward.points_to_redeem }} แต้ม
+              </p>
+              {% endif %}
+          </div>
+        {% endif %}
+        <button type="submit" class="w-full rounded bg-blue-600 px-2 py-3 text-white hover:bg-blue-400">
           สั่งอาหาร
         </button>
       </form>

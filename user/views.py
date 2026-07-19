@@ -9,6 +9,8 @@ from django.contrib.auth.hashers import check_password
 from django.contrib.auth.hashers import make_password, check_password
 from django.contrib.auth.decorators import login_required
 from posapp.models import User
+from django.core.paginator import Paginator
+from django.utils import timezone
 
 
 def login_and_convert_cart(request):
@@ -31,6 +33,7 @@ def login_and_convert_cart(request):
             login(request, user)
 
             # บันทึกข้อมูลเป็น session
+            request.session['user_id'] = user.id 
             request.session['username'] = user.username
             request.session['email'] = user.email
             request.session['role'] = user.role
@@ -51,7 +54,6 @@ def register(request):
         email = request.POST.get('email').strip()
         password = request.POST.get('password').strip()
         confirm_password = request.POST.get('confirm_password').strip()
-        role = request.POST.get('role', 'member')  # ค่าเริ่มต้นเป็น 'member'
 
         # ตรวจสอบว่าชื่อผู้ใช้หรืออีเมลซ้ำหรือไม่
         if User.objects.filter(username=username).exists():
@@ -69,10 +71,11 @@ def register(request):
                 username=username,
                 email=email,
                 password=hashed_password,
-                role=role
+                role='member'
             )
 
             # บันทึกข้อมูลผู้ใช้ใน session
+            request.session['user_id'] = user.id 
             request.session['username'] = user.username
             request.session['email'] = user.email
             request.session['role'] = user.role
@@ -154,7 +157,34 @@ def cart_view(request):
         item['total_price'] = item['quantity'] * item['price']
         total_price += item['total_price']
 
-    return render(request, "user/cart.html", {"cart": cart, "total_price": total_price})
+    reward = Reward.objects.filter(
+        is_active=True,
+        start_date__lte=timezone.now().date(),
+        end_date__gte=timezone.now().date(),
+    ).order_by('id').first()
+    user_id = request.session.get('user_id')
+    user = User.objects.filter(id=user_id).first() if user_id else None
+    meets_min_purchase = bool(reward and total_price >= reward.min_purchase)
+    amount_to_minimum = max(reward.min_purchase - total_price, 0) if reward else 0
+    has_enough_points = bool(
+        user and reward and user.points >= reward.points_to_redeem
+    )
+    can_redeem = meets_min_purchase and has_enough_points
+
+    return render(
+        request,
+        "user/cart.html",
+        {
+            "cart": cart,
+            "total_price": total_price,
+            "reward": reward,
+            "can_redeem": can_redeem,
+            "meets_min_purchase": meets_min_purchase,
+            "amount_to_minimum": amount_to_minimum,
+            "has_enough_points": has_enough_points,
+            "user_points": user.points if user else 0,
+        },
+    )
 
 def remove_from_cart(request, menu_id):
     cart = request.session.get('cart', {})
@@ -169,8 +199,9 @@ def clear_cart(request):
 
 # หน้าสั่งอาหาร
 def menu_view(request):
-    menus = Menu.objects.filter(is_available=True)
-    return render(request, 'user/menu.html', {'menus': menus})
+    menu_list = Menu.objects.filter(is_available=True).order_by('name')
+    page_obj = Paginator(menu_list, 12).get_page(request.GET.get('page'))
+    return render(request, 'user/menu.html', {'menus': page_obj, 'page_obj': page_obj})
 
 def order_status(request):
     username = request.session.get('username')
@@ -186,9 +217,27 @@ def order_status(request):
         if cart:
             print("Cart")
 
-            reward_setting = Reward.objects.filter(is_active=True).first()
+            reward_setting = Reward.objects.filter(
+                is_active=True,
+                start_date__lte=timezone.now().date(),
+                end_date__gte=timezone.now().date(),
+            ).order_by('id').first()
             
-            use_coupon = request.POST.get('use_coupon')
+            use_coupon = request.POST.get("use_coupon")
+
+            try:
+                cart_menu_ids = [int(menu_id) for menu_id in cart]
+            except (TypeError, ValueError):
+                return redirect('cart')
+
+            # One query for all cart items; dictionary lookup is O(1) per row.
+            menu_by_id = {
+                menu.id: menu
+                for menu in Menu.objects.filter(id__in=cart_menu_ids)
+            }
+            if len(menu_by_id) != len(cart_menu_ids):
+                # A menu was deleted after it was added to the session cart.
+                return redirect('cart')
 
 
             order = Order.objects.create(
@@ -201,7 +250,7 @@ def order_status(request):
             
 
             for menu_id, item in cart.items():
-                menu_item = get_object_or_404(Menu, id=int(menu_id))
+                menu_item = menu_by_id[int(menu_id)]
                 order_item = History.objects.create(
                     order=order,
                     menu=menu_item,
@@ -211,15 +260,31 @@ def order_status(request):
                 )
                 total_price += order_item.price
 
-            if use_coupon:
-                if reward_setting and user.points >= reward_setting.points_to_redeem:
-                    discount = reward_setting.discount_amount
-                    total_price -= discount  # หักส่วนลดจากราคาทั้งหมด
-                    user.points -= reward_setting.points_to_redeem  # หักคะแนนสะสม
-                    user.save()
+            # if use_coupon:
+            #     if reward_setting and user.points >= reward_setting.points_to_redeem:
+            #         discount = reward_setting.discount_amount
+            #         total_price -= discount  # หักส่วนลดจากราคาทั้งหมด
+            #         user.points -= reward_setting.points_to_redeem  # หักคะแนนสะสม
+            #         user.save()
+            #         request.session['total_points'] = user.points  
+            discount_amount = 0
+            points_used = 0
+
+            if use_coupon and reward_setting:
+                if (
+                    total_price >= reward_setting.min_purchase
+                    and user.points >= reward_setting.points_to_redeem
+                ):
+                    discount_amount = min(reward_setting.discount_amount, total_price)
+                    points_used = reward_setting.points_to_redeem
+                    total_price -= discount_amount
+                    user.points -= points_used
+                    user.save(update_fields=['points'])
 
             # อัปเดตราคา
             order.total_price = total_price
+            order.discount_amount = discount_amount
+            order.points_used = points_used
             order.save()
 
             # ลบตะกร้า
@@ -235,8 +300,23 @@ def order_status(request):
 
     return render(request, 'user/cart.html') 
 
+def my_orders(request):
+    user_id = request.session.get('user_id')
+    if not user_id:
+        return redirect('login')
+
+    order_list = Order.objects.filter(user_id=user_id).order_by('-created_at')
+    page_obj = Paginator(order_list, 10).get_page(request.GET.get('page'))
+    return render(request, 'user/my_orders.html', {'orders': page_obj, 'page_obj': page_obj})
+
+
 def order_detail_view(request, order_id):
-    order = get_object_or_404(Order, id=order_id)
+    user_id = request.session.get('user_id')
+    if not user_id:
+        return redirect('login')
+
+    # Only the owner of an order can open its detail page.
+    order = get_object_or_404(Order, id=order_id, user_id=user_id)
     order_items = History.objects.filter(order=order)
     
     return render(request, 'user/order_detail.html', {
@@ -255,8 +335,9 @@ def check_points(request):
         user = User.objects.get(id=user_id)
     except User.DoesNotExist:
         return render(request, 'user/check_points.html', {'total_points': 0, 'error': 'ไม่พบข้อมูลผู้ใช้'})
-    user_orders = Order.objects.filter(user=user)
-    total_points = sum(item.price for item in History.objects.filter(order__in=user_orders))
+    # user = get_object_or_404(User, id=user_id)
+    # user_orders = Order.objects.filter(user=user)
+    # total_points = sum(item.price for item in History.objects.filter(order__in=user_orders))
 
-    return render(request, 'user/check_points.html', {'total_points': total_points})
+    return render(request, 'user/check_points.html', {'total_points': user.points})
 

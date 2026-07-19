@@ -3,85 +3,69 @@
 {% block main %}
 <!-- admin_dashboard.html -->
 
-<div class="container">
-    <h2 class="text-center text-3xl">ยอดการขายวันนี้</h2>
+<div class="w-full max-w-7xl mx-auto px-4 md:px-0">
+    <h2 class="text-center text-2xl md:text-3xl font-bold mb-8">ยอดการขายวันนี้</h2>
     
     <!-- Bar Chart -->
-    <div class="mb-8">
-        <h2 class="text-2xl font-bold">เมนูที่ขายดีที่สุดของวันนี้</h2>
+    <div class="mb-10">
+        <h2 class="text-center md:text-left text-xl md:text-2xl font-bold mb-4">เมนูที่ขายดีที่สุดของวันนี้</h2>
         
         {% if has_top_menus_data %}
-            <div class="relative flex">
+            <div class="flex justify-center md:justify-start">
+                <!-- ใช้ max-w-[500px] บนมือถือ และปลดล็อกบนจอใหญ่ด้วย md:max-w-none -->
                 <img src="{{ top_menus_today_img }}" 
                      alt="Bar Chart" 
-                     class="w-full h-auto rounded-lg shadow-md cursor-pointer" 
+                     class="w-full max-w-[500px] md:max-w-none h-auto rounded-lg shadow-md cursor-pointer transition-transform hover:scale-[1.01]" 
                      onclick="openFullScreen(this)">
             </div>
         {% else %}
-            <p class="text-center text-gray-500">ยังไม่มีข้อมูลการขายสำหรับวันนี้</p>
+            <p class="text-center text-gray-500 my-8">ยังไม่มีข้อมูลการขายสำหรับวันนี้</p>
         {% endif %}
     </div>
 
     <!-- Line Chart + Pie Chart -->
-    <div class="flex flex-col md:flex-row md:space-x-6 mt-4">
+    <div class="flex flex-col md:flex-row md:space-x-6">
         
         <!-- Line Chart -->
-        <div class="w-full md:w-3/5 ">
-            <h2 class="text-2xl font-bold ">ยอดขายตามช่วงเวลาของวัน</h2>
+        <div class="w-full md:w-3/5 mb-10 md:mb-0">
+            <h2 class="text-center md:text-left text-xl md:text-2xl font-bold mb-4">ยอดขายตามช่วงเวลาของวัน</h2>
             
             {% if has_sales_data %}
-                <div class="relative flex">
+                <div class="flex justify-center md:justify-start">
                     <img src="{{ sales_by_hour_img }}" 
-                         alt="Line Chart" 
-                         class="w-full h-auto rounded-lg shadow-md cursor-pointer" 
-                         onclick="openFullScreen(this)">
+                        alt="Line Chart" 
+                        class="w-full max-w-[500px] md:max-w-none h-auto rounded-lg shadow-md cursor-pointer transition-transform hover:scale-[1.01]" 
+                        onclick="openFullScreen(this)">
                 </div>
             {% else %}
-                <p class="text-center text-gray-500">ยังไม่มีข้อมูลยอดขายสำหรับวันนี้</p>
+                <p class="text-center text-gray-500 my-8">ยังไม่มีข้อมูลยอดขายสำหรับวันนี้</p>
             {% endif %}
         </div>
 
         <!-- Pie Chart -->
         <div class="w-full md:w-2/5">
-            <h2 class="text-2xl font-bold">สถานะคำสั่งซื้อในวันนี้</h2>
+            <h2 class="text-center md:text-left text-xl md:text-2xl font-bold mb-4">สถานะคำสั่งซื้อในวันนี้</h2>
             
             {% if has_order_status_data %}
-                <div class="relative flex justify-center">
+                <div class="flex justify-center">
                     <img src="{{ order_status_today_img }}" 
-                         alt="Pie Chart" 
-                         class="w-full h-auto rounded-lg shadow-md cursor-pointer" 
-                         onclick="openFullScreen(this)">
+                        alt="Pie Chart" 
+                        class="w-full max-w-[500px] md:max-w-none h-auto rounded-lg shadow-md cursor-pointer transition-transform hover:scale-[1.01]" 
+                        onclick="openFullScreen(this)">
                 </div>
             {% else %}
-                <p class="text-center text-gray-500">ยังไม่มีข้อมูลสำหรับวันนี้</p>
+                <p class="text-center text-gray-500 my-8">ยังไม่มีข้อมูลสำหรับวันนี้</p>
             {% endif %}
         </div>
     </div>
 </div>
 
 <!-- Full-screen Image Viewer -->
-<div id="fullscreenViewer" class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center hidden z-50">
-    <img id="fullscreenImage" class="max-w-full max-h-full">
-    <button onclick="closeFullScreen()" class="absolute top-4 right-4 text-white text-2xl font-bold">✖</button>
+<!-- ปรับให้พื้นหลังเป็นสีดำโปร่งแสง และสามารถคลิกที่พื้นหลังเพื่อปิดได้ -->
+<div id="fullscreenViewer" class="fixed inset-0 bg-black/90 flex items-center justify-center hidden z-[100] p-4 cursor-pointer" onclick="closeFullScreen()">
+    <img id="fullscreenImage" class="max-w-full max-h-full rounded-lg shadow-2xl cursor-default" onclick="event.stopPropagation()">
+    <button onclick="closeFullScreen()" class="absolute top-4 right-4 md:top-8 md:right-8 text-white text-3xl font-bold hover:text-gray-300 transition-colors">✖</button>
 </div>
-
-<style>
-    @media (max-width: 768px) {
-        .container {
-            padding: 15px;
-        }
-        h2 {
-            font-size: 1.75rem;
-            text-align: center;
-        }
-        img {
-            width: 100%;
-            max-width: 500px;
-            display: block;
-            margin: 0 auto;
-        }
-    }
-</style>
 
 <script>
     function openFullScreen(img) {
@@ -92,7 +76,5 @@
     function closeFullScreen() {
         document.getElementById("fullscreenViewer").classList.add("hidden");
     }
-    
 </script>
-
 {% endblock %}

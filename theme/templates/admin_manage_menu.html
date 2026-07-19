@@ -2,159 +2,64 @@
 {% load i18n %}
 
 {% block main %}
+<div class="max-w-7xl mx-auto bg-white p-5 rounded-lg shadow-md mt-6">
+    <h1 class="text-3xl text-center text-gray-800 font-bold mb-6">จัดการเมนู</h1>
 
-<head>
-    <title>ระบบจัดการเมนู</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        /* เพิ่มสไตล์ให้ดูทันสมัย */
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f7fc;
-            margin: 0;
-            padding: 20px;
-        }
-
-        h1 {
-            text-align: center;
-            color: #333;
-            font-size: 36px;
-            margin-bottom: 20px;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        .button {
-            padding: 10px 20px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            text-decoration: none;
-            border-radius: 4px;
-            margin: 5px;
-            font-size: 14px;
-            display: inline-block;
-            transition: background-color 0.3s ease;
-        }
-
-        .button:hover {
-            background-color: #45a049;
-        }
-
-        .button-danger {
-            background-color: #f44336;
-        }
-
-        .button-danger:hover {
-            background-color: #e53935;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-
-        table,
-        th,
-        td {
-            border: 1px solid #ddd;
-        }
-
-        th,
-        td {
-            padding: 12px;
-            text-align: left;
-            font-size: 16px;
-        }
-
-        th {
-            background-color: #f8f8f8;
-            color: #333;
-        }
-
-        td {
-            background-color: #fff;
-            color: #555;
-        }
-
-        td img {
-            max-width: 80px;
-            height: auto;
-            border-radius: 4px;
-        }
-
-        .status {
-            font-weight: bold;
-            text-transform: capitalize;
-        }
-
-        .status.available {
-            color: #4CAF50;
-        }
-
-        .status.unavailable {
-            color: #f44336;
-        }
-
-        .actions a {
-            display: inline-block;
-            margin-right: 10px;
-        }
-    </style>
-</head>
-
-<body>
-    <div class="container">
-        <h1>จัดการเมนู</h1>
-
-        <a href="{% url 'add_menu' %}" class="button">เพิ่มเมนูใหม่</a>
-        <div class="table-responsive">
-            <table>
-                <thead>
-                    <tr>
-                        <th>ชื่อเมนู</th>
-                        <th>คำอธิบาย</th>
-                        <th>ราคา</th>
-                        <th>รูปภาพ</th>
-                        <th>สถานะ</th>
-                        <th>การกระทำ</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for menu in menus %}
-                    <tr>
-                        <td>{{ menu.name }}</td>
-                        <td>{{ menu.description }}</td>
-                        <td>฿{{ menu.price }}</td>
-                        <td>
-                            {% if menu.image %}
-                                <img src="{{ menu.image.url }}" alt="{{ menu.name }}">
-                            {% else %}
-                                <span>ไม่มีภาพ</span>
-                            {% endif %}
-                        </td>
-                        <td class="status {% if menu.is_available %}available{% else %}unavailable{% endif %}">
-                            {{ menu.is_available|yesno:"Available,Unavailable" }}
-                        </td>
-                        <td class="actions">
-                            <a href="{% url 'edit_menu' menu.id %}" class="button">แก้ไข</a>
-                            <a href="{% url 'delete_menu' menu.id %}" class="button button-danger"
-                                onclick="return confirm('คุณแน่ใจว่าต้องการลบเมนูนี้?');">ลบ</a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+    <a href="{% url 'add_menu' %}" class="px-4 py-2 bg-green-500 text-white rounded-md text-sm inline-block transition-colors hover:bg-green-600 mb-4">
+        เพิ่มเมนูใหม่
+    </a>
+    
+    <div class="overflow-x-auto">
+        <table class="w-full border-collapse border border-gray-200 mt-2">
+            <thead>
+                <tr>
+                    <th class="bg-gray-50 text-gray-800 text-left p-3 border border-gray-200">ชื่อเมนู</th>
+                    <th class="bg-gray-50 text-gray-800 text-left p-3 border border-gray-200">คำอธิบาย</th>
+                    <th class="bg-gray-50 text-gray-800 text-left p-3 border border-gray-200">ราคา</th>
+                    <th class="bg-gray-50 text-gray-800 text-left p-3 border border-gray-200">รูปภาพ</th>
+                    <th class="bg-gray-50 text-gray-800 text-left p-3 border border-gray-200">สถานะ</th>
+                    <th class="bg-gray-50 text-gray-800 text-left p-3 border border-gray-200">การกระทำ</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for menu in menus %}
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="text-gray-600 p-3 border border-gray-200">{{ menu.name }}</td>
+                    <td class="text-gray-600 p-3 border border-gray-200">{{ menu.description }}</td>
+                    <td class="text-gray-600 p-3 border border-gray-200">฿{{ menu.price }}</td>
+                    <td class="p-3 border border-gray-200">
+                        {% if menu.image %}
+                            <img src="{{ menu.image.url }}" alt="{{ menu.name }}" class="w-20 h-auto rounded-md object-cover">
+                        {% else %}
+                            <span class="text-gray-400 text-sm">ไม่มีภาพ</span>
+                        {% endif %}
+                    </td>
+                    <td class="p-3 border border-gray-200 font-bold capitalize {% if menu.is_available %}text-green-600{% else %}text-red-500{% endif %}">
+                        {{ menu.is_available|yesno:"Available,Unavailable" }}
+                    </td>
+                    <td class="p-3 border border-gray-200 whitespace-nowrap">
+                        <a href="{% url 'edit_menu' menu.id %}" class="px-3 py-1.5 bg-green-500 text-white rounded-md text-sm inline-block transition-colors hover:bg-green-600 mr-2">แก้ไข</a>
+                        <a href="{% url 'delete_menu' menu.id %}" class="px-3 py-1.5 bg-red-500 text-white rounded-md text-sm inline-block transition-colors hover:bg-red-600"
+                            onclick="return confirm('คุณแน่ใจว่าต้องการลบเมนูนี้?');">ลบ</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
-</body>
-
+    
+    {% if page_obj.paginator.num_pages > 1 %}
+    <nav class="mt-6 flex justify-center items-center space-x-4" aria-label="Menu pages">
+        {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}" class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors">Previous</a>
+        {% endif %}
+        
+        <span class="text-gray-600">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}" class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors">Next</a>
+        {% endif %}
+    </nav>
+    {% endif %}
+</div>
 {% endblock %}

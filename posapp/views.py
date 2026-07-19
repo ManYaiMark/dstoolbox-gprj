@@ -1,23 +1,38 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
+from django.contrib.admin.views.decorators import staff_member_required
+
 from .models import *
 from .forms import *
 from django.utils import timezone
+import matplotlib
+# Select a non-GUI backend before importing pyplot.  This is required on a
+# Django server and lets Matplotlib render images without a display.
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from matplotlib import font_manager
 from django.db.models import Sum, Count
 from django.conf import settings
 import os
 from django.contrib.auth import logout, login
-import matplotlib
 from django.views.decorators.cache import cache_page
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib import messages
 from django.http import HttpResponse
+from django.core.paginator import Paginator
 
-# matplotlib setting
-plt.rcParams["font.family"] = "TH Sarabun New"
-plt.rcParams.update({"font.size": 24})
-matplotlib.use("Agg")
+# Matplotlib's default font does not contain Thai glyphs.  Tahoma ships with
+# Windows and supports Thai, so use its actual font file when it is available.
+# The fallback keeps the project runnable on machines that do not have it.
+THAI_FONT_PATH = "C:/Windows/Fonts/tahoma.ttf"
+if os.path.exists(THAI_FONT_PATH):
+    THAI_FONT = font_manager.FontProperties(fname=THAI_FONT_PATH)
+    plt.rcParams["font.family"] = THAI_FONT.get_name()
+else:
+    THAI_FONT = font_manager.FontProperties(family="Tahoma")
+    plt.rcParams["font.family"] = "Tahoma"
+
+plt.rcParams.update({"font.size": 16, "axes.unicode_minus": False})
 
 # Create your views here.
 
@@ -29,7 +44,8 @@ def save_plot(fig, filename):
     os.makedirs(static_dir, exist_ok=True)
 
     filepath = os.path.join(static_dir, f"{filename}.png")
-    fig.savefig(filepath)
+    # bbox_inches prevents Thai labels from being clipped at the image edge.
+    fig.savefig(filepath, dpi=150, bbox_inches="tight")
     plt.close(fig)
 
     return f"/static/images/{filename}.png"
@@ -43,9 +59,9 @@ def login_view(request):
             return redirect("dashboard")
     else:
         form = AuthenticationForm()
-    return render(request, "login.html", {"form": form})
+    return render(request, "user/login.html", {"form": form})
 
-@login_required
+@staff_member_required
 def dashboard(request):
     today = timezone.now().date()
 
@@ -77,6 +93,8 @@ def dashboard(request):
         ax.tick_params(axis="y", rotation=0)  # ปรับการหมุนของ labels แกน Y
 
         ax.set_yticks(range(0, max(menu_order_counts) + 1))
+        ax.set_xlabel("เมนู")
+        ax.set_ylabel("จำนวนการสั่งซื้อ", rotation="horizontal", ha="right")
 
         fig.tight_layout()
 
@@ -105,22 +123,30 @@ def dashboard(request):
             "completed": "สำเร็จ",
             "cancelled": "ยกเลิก"
         }
+        
+        statuses = [statuses_translation.get(entry["status"], entry["status"]) for entry in status_data]
+        total_orders = [entry["total_orders"] for entry in status_data]
+        statuses = [
+            {"pending": "รอดำเนินการ",
+             "preparing": "กำลังเตรียม",
+             "completed": "สำเร็จ",
+             "cancelled": "ยกเลิก"}.get(entry["status"], entry["status"])
+            for entry in status_data
+        ]
+        
+        fig3, ax3 = plt.subplots(figsize=(8, 7))
+        ax3.pie(
+            total_orders,
+            labels=statuses,
+            autopct="%1.1f%%",
+            startangle=90,
+            colors=["#FF6347", "#FFD700", "#32CD32", "#808080"],
+        )
+        ax3.axis('equal')  
+        ax3.set_title("สถานะคำสั่งซื้อในวันนี้")
 
-    statuses = [statuses_translation.get(entry["status"], entry["status"]) for entry in status_data]
-    total_orders = [entry["total_orders"] for entry in status_data]
-    
-    fig3, ax3 = plt.subplots(figsize=(8, 7))
-    ax3.pie(
-        total_orders,
-        labels=statuses,
-        autopct="%1.1f%%",
-        startangle=90,
-        colors=["#FF6347", "#FFD700", "#32CD32", "#808080"],
-    )
-    ax3.axis('equal')  
-    ax3.set_title("สถานะคำสั่งซื้อในวันนี้")
-
-    save_plot(fig3, "order_status_today")  
+        ax3.set_title("สถานะคำสั่งซื้อในวันนี้")
+        save_plot(fig3, "order_status_today")  
 
 
     # 3. Line Chart - ยอดขายตามช่วงเวลา
@@ -148,6 +174,8 @@ def dashboard(request):
 
         # เพิ่มเส้นประ (grid lines)
         ax3.grid(True, linestyle="--", color="gray", alpha=0.7)
+        ax3.set_xlabel("ช่วงเวลา")
+        ax3.set_ylabel("ยอดขาย (บาท)", rotation="horizontal", ha="right")
 
         # ปรับ tick ของแกน X ให้เป็นช่วงเวลา 24 ชั่วโมง
         ax3.set_xticks(
@@ -207,11 +235,13 @@ def reset_expired_points():
 
 # แสดง Reward ทั้งหมด
 def reward_dashboard(request):
-    rewards = Reward.objects.filter(end_date__gte=timezone.now())
-    return render(request, "admin_rewards.html", {"rewards": rewards})
+    reward_list = Reward.objects.filter(end_date__gte=timezone.now()).order_by("-end_date")
+    page_obj = Paginator(reward_list, 10).get_page(request.GET.get("page"))
+    return render(request, "admin_rewards.html", {"rewards": page_obj, "page_obj": page_obj})
 
 
 # สร้างเงื่อนไขสะสมแต้มใหม่
+@staff_member_required
 def create_reward(request):
     if request.method == "POST":
         form = RewardForm(request.POST)
@@ -244,10 +274,11 @@ def delete_reward(request, reward_id):
 
     return redirect("reward")
 
-
+@staff_member_required
 def manage_menu(request):
-    menus = Menu.objects.all()
-    return render(request, "admin_manage_menu.html", {"menus": menus})
+    menu_list = Menu.objects.all().order_by("name")
+    page_obj = Paginator(menu_list, 10).get_page(request.GET.get("page"))
+    return render(request, "admin_manage_menu.html", {"menus": page_obj, "page_obj": page_obj})
 
 
 def add_menu(request):
@@ -256,7 +287,7 @@ def add_menu(request):
         form = MenuForm(request.POST, request.FILES)
         if form.is_valid():
             form.save()
-            # หลังจากบันทึกเสร็จแล้วเปลี่ยนเส้นทางไปที่หน้า manage_menu
+            
             return redirect("manage_menu")
     else:
         form = MenuForm()
@@ -266,7 +297,6 @@ def add_menu(request):
 
 def delete_menu(request, id):
     menu = get_object_or_404(Menu, id=id)
-
     menu.delete()
 
     return redirect("manage_menu")
@@ -286,8 +316,7 @@ def edit_menu(request, id):
 
 
 # จัดการออร์เดอร์
-
-
+@staff_member_required
 def manage_orders(request):
     status_filter = request.GET.get("status")
     if status_filter:
@@ -301,40 +330,17 @@ def manage_orders(request):
     if user_filter:
         orders = orders.filter(user__username__icontains=user_filter)
 
-    return render(request, "orders/manage_orders.html", {"orders": orders})
-
-
-def update_order(request, order_id):
-    order = get_object_or_404(Order, id=order_id)
-
-    if request.method == "POST":
-        order.total_price = float(request.POST.get("total_price"))
-        order.status_order = request.POST.get("status")
-        order.save()
-        messages.success(request, f"Order {order.id} updated successfully.")
-        return redirect("orders")
-
-    return render(request, "orders/update_order.html", {"order": order})
-
-
-def delete_order(request, order_id):
-    order = get_object_or_404(Order, id=order_id)
-    order.delete()
-    messages.success(request, "Order deleted successfully!")
-    return redirect("orders")
-
-
-# ✅ แสดงหน้าดูออร์เดอร์
-def detail_order(request, order_id):
-    order = get_object_or_404(Order, id=order_id)
-
-    # ดึงรายการ History ที่เกี่ยวข้องกับ Order นี้
-    order_items = History.objects.filter(order=order)
-
+    page_obj = Paginator(orders, 10).get_page(request.GET.get("page"))
     return render(
-        request, "orders/details.html", {"order": order, "order_items": order_items}
+        request,
+        "orders/manage_orders.html",
+        {
+            "orders": page_obj,
+            "page_obj": page_obj,
+            "status_filter": status_filter or "",
+            "user_filter": user_filter or "",
+        },
     )
-
 
 # ✅ อัปเดตสถานะออร์เดอร์
 def update_order_status(request, order_id):
@@ -355,3 +361,112 @@ def update_order_status(request, order_id):
             return HttpResponse("สถานะไม่ถูกต้อง", status=400)
 
     return redirect("orders")
+
+# ม่ได้ใช้
+def update_order(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+
+    if request.method == "POST":
+        order.total_price = float(request.POST.get("total_price"))
+        order.status_order = request.POST.get("status")
+        order.save()
+        messages.success(request, f"Order {order.id} updated successfully.")
+        return redirect("orders")
+
+    return render(request, "orders/update_order.html", {"order": order})
+
+
+def delete_order(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+    order.delete()
+    messages.success(request, "Order deleted successfully!")
+    return redirect("orders")
+
+
+@staff_member_required
+def detail_order(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+    order_items = History.objects.filter(order=order)
+    all_menus = Menu.objects.filter(is_available=True)
+
+    return render(
+        request, 
+        "orders/details.html", 
+        {
+            "order": order, 
+            "order_items": order_items, 
+            "all_menus": all_menus
+        }
+    )
+
+@staff_member_required
+def add_order_item(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+    
+    if request.method == "POST":
+        menu_id = request.POST.get("menu_id")
+        quantity = int(request.POST.get("quantity", 1))
+        menu = get_object_or_404(Menu, id=menu_id)
+
+        item, created = History.objects.get_or_create(
+            order=order,
+            menu=menu,
+            defaults={
+                "unit_price": menu.price, 
+                "quantity": quantity, 
+                "price": menu.price * quantity
+            }
+        )
+
+        if not created:
+            item.quantity += quantity
+            item.price = item.quantity * item.unit_price
+            item.save()
+
+        total = sum(i.price for i in History.objects.filter(order=order))
+        order.total_price = total
+        order.save()
+
+    return redirect("detail_order", order_id=order.id)
+
+@staff_member_required
+def update_order_item(request, order_id, item_id):
+    order = get_object_or_404(Order, id=order_id)
+    item = get_object_or_404(History, id=item_id, order=order)
+
+    if request.method == "POST":
+        action = request.POST.get("action")
+        
+        if action == "increase":
+            item.quantity += 1
+        elif action == "decrease":
+            item.quantity -= 1
+
+        if item.quantity <= 0:
+            item.delete()
+        else:
+            item.price = item.quantity * item.unit_price
+            item.save()
+
+        total = sum(i.price for i in History.objects.filter(order=order))
+        order.total_price = total
+        order.save()
+
+    return redirect("detail_order", order_id=order.id)
+
+@staff_member_required
+def delete_order_item(request, order_id, item_id):
+    order = get_object_or_404(Order, id=order_id)
+    item = get_object_or_404(History, id=item_id, order=order)
+
+    if request.method == "POST":
+        item.delete()
+
+        total = sum(i.price for i in History.objects.filter(order=order))
+        order.total_price = total
+        order.save()
+
+    return redirect("detail_order", order_id=order.id)
+
+
+

@@ -19,34 +19,34 @@
     {% endif %}
 
     <form method="POST" class="space-y-4" onsubmit="return validatePasswords()">
-      {% csrf_token %}
-  
-      <div>
-          <label for="username" class="block text-sm font-medium text-blue-700">ชื่อผู้ใช้</label>
-          <input type="text" name="username" id="username" class="w-full p-3 mt-1 border rounded-lg bg-blue-100 focus:ring focus:ring-blue-300" placeholder="Username" required>
-      </div>
-  
-      <div>
-          <label for="email" class="block text-sm font-medium text-blue-700">อีเมล</label>
-          <input type="email" name="email" id="email" class="w-full p-3 mt-1 border rounded-lg bg-blue-100 focus:ring focus:ring-blue-300" placeholder="Email" required>
-      </div>
-  
-      <div>
-          <label for="password" class="block text-sm font-medium text-blue-700">รหัสผ่าน</label>
-          <input type="password" name="password" id="password" class="w-full p-3 mt-1 border rounded-lg bg-blue-100 focus:ring focus:ring-blue-300" placeholder="Password" required>
-      </div>
-  
-      <div>
-          <label for="confirm_password" class="block text-sm font-medium text-blue-700">ยืนยันรหัสผ่าน</label>
-          <input type="password" name="confirm_password" id="confirm_password" class="w-full p-3 mt-1 border rounded-lg bg-blue-100 focus:ring focus:ring-blue-300" placeholder="Confirm Password" required>
-          <p id="password-error" class="text-sm text-red-600 hidden">รหัสผ่านไม่ตรงกัน</p>
-      </div>
-  
-      <button type="submit" class="w-full px-4 py-2 font-semibold text-white bg-blue-500 rounded-lg shadow-md hover:bg-blue-600 transition duration-300">
-          สมัครสมาชิก
-      </button>
-  </form>
-  
+        {% csrf_token %}
+    
+        <div>
+            <label for="username" class="block text-sm font-medium text-blue-700">ชื่อผู้ใช้</label>
+            <input type="text" name="username" id="username" class="w-full p-3 mt-1 border rounded-lg bg-blue-100 focus:ring focus:ring-blue-300" placeholder="Username" required>
+        </div>
+    
+        <div>
+            <label for="email" class="block text-sm font-medium text-blue-700">อีเมล</label>
+            <input type="email" name="email" id="email" class="w-full p-3 mt-1 border rounded-lg bg-blue-100 focus:ring focus:ring-blue-300" placeholder="Email" required>
+        </div>
+    
+        <div>
+            <label for="password" class="block text-sm font-medium text-blue-700">รหัสผ่าน</label>
+            <input type="password" name="password" id="password" class="w-full p-3 mt-1 border rounded-lg bg-blue-100 focus:ring focus:ring-blue-300" placeholder="Password" required>
+        </div>
+    
+        <div>
+            <label for="confirm_password" class="block text-sm font-medium text-blue-700">ยืนยันรหัสผ่าน</label>
+            <input type="password" name="confirm_password" id="confirm_password" class="w-full p-3 mt-1 border rounded-lg bg-blue-100 focus:ring focus:ring-blue-300" placeholder="Confirm Password" required>
+            <p id="password-error" class="text-sm text-red-600 hidden">รหัสผ่านไม่ตรงกัน</p>
+        </div>
+    
+        <button type="submit" class="w-full px-4 py-2 font-semibold text-white bg-blue-500 rounded-lg shadow-md hover:bg-blue-600 transition duration-300">
+            สมัครสมาชิก
+        </button>
+    </form>
+    
 
     <div class="text-center">
         <p class="text-sm text-blue-600">
@@ -58,19 +58,19 @@
 
 <!-- ✅ JavaScript เช็ครหัสผ่านก่อนส่งฟอร์ม -->
 <script>
-  function validatePasswords() {
-      let password = document.getElementById("password").value;
-      let confirmPassword = document.getElementById("confirm_password").value;
-      let errorText = document.getElementById("password-error");
+    function validatePasswords() {
+        let password = document.getElementById("password").value;
+        let confirmPassword = document.getElementById("confirm_password").value;
+        let errorText = document.getElementById("password-error");
 
-      if (password !== confirmPassword) {
-          errorText.classList.remove("hidden");
-          return false;
-      } else {
-          errorText.classList.add("hidden");
-          return true;
-      }
-  }
+        if (password !== confirmPassword) {
+            errorText.classList.remove("hidden");
+            return false;
+        } else {
+            errorText.classList.add("hidden");
+            return true;
+        }
+    }
 </script>
 
 </body>

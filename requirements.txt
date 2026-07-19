@@ -3,3 +3,4 @@ django-browser-reload
 django-tailwind
 django-cors-headers
 matplotlib
+Pillow

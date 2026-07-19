@@ -38,11 +38,13 @@ class User(AbstractUser):
 
 class Menu(models.Model):
     name = models.CharField(max_length=255)
-    description = models.TextField()
+    description = models.TextField( null=True, blank=True)
     price = models.IntegerField()
-    image_url = models.URLField()
-    image = models.ImageField(upload_to='menu_images/', null=True, blank=True)
+
+    image = models.ImageField(upload_to='menu_images/', default='menu_images/default_menu.jpg')
+
     is_available = models.BooleanField(default=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -64,8 +66,17 @@ class Order(models.Model):
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     total_price = models.FloatField()
+    discount_amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+    )
+    points_used = models.IntegerField(default=0)
+    points_earned = models.IntegerField(default=0)
+
     status_order = models.CharField(max_length=20, choices=STATUS_CHOICES, default=PENDING)
     complete = models.BooleanField(default=False)  
+
     points_earned = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     
@@ -73,14 +84,27 @@ class Order(models.Model):
         return f"Order {self.id} by {self.user.username}"
 
     def save(self, *args, **kwargs):
-        """ ให้แต้มเฉพาะออเดอร์ที่เสร็จสมบูรณ์ """
-        if self.status_order == 'completed':  
-            reward_setting = Reward.objects.filter(is_active=True).first()
-            if reward_setting and reward_setting.is_within_promo():
-                if self.total_price >= reward_setting.min_purchase:
-                    self.points_earned = reward_setting.points_per_purchase
-                    self.user.points += self.points_earned
-                    self.user.save()
+        old_status = None 
+
+        if self.pk:
+            old_status = Order.objects.get(pk=self.pk).status_order
+
+        is_becoming_completed = (
+            self.status_order == self.COMPLETED and old_status != self.COMPLETED
+        )
+        if is_becoming_completed:   
+            reward = Reward.objects.filter(
+                is_active=True,
+                # lte = less than or equal to "<=" , gte = greater than or equal to ">="
+                start_date__lte=date.today(),
+                end_date__gte=date.today()
+            ).first()
+
+            if reward and self.total_price >= reward.min_purchase:
+                self.points_earned = reward.points_per_purchase
+                self.user.points += self.points_earned
+                self.user.save(update_fields=['points'])  # Update only the points field
+
         super().save(*args, **kwargs)
 
 class History(models.Model):
@@ -104,9 +128,12 @@ class Reward(models.Model):
     min_purchase = models.DecimalField(max_digits=10, decimal_places=2)
     start_date = models.DateField()
     end_date = models.DateField()
+
     points_per_purchase = models.IntegerField(default=1)
     points_to_redeem = models.IntegerField(default=10)
+
     discount_amount = models.DecimalField(max_digits=10, decimal_places=2)
+
     is_active = models.BooleanField(default=True)
 
     def is_within_promo(self):
