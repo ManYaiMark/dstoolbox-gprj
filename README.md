@@ -8,7 +8,7 @@
 
 ### 1. Clone Repository
 ```bash
-git clone https://github.com/Jxuu03/dstoolbox-gprj.git
+git clone https://github.com/ManYaiMark/dstoolbox-gprj.git
 cd dstoolbox-gprj
 git checkout project  # ถ้า branch ต่างจาก main
 ```
