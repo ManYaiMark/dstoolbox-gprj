@@ -4,3 +4,4 @@ django-tailwind
 django-cors-headers
 matplotlib
 Pillow
+python-dotenv
